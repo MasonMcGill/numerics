@@ -49,11 +49,11 @@ template nDim*(grid: InputGrid|OutputGrid): int =
   ## [doc]
   grid.size.len
 
-template Indices*(Grid: typedesc[InputGrid|OutputGrid]): typedesc[tuple] =
+template Indices*(Grid: typedesc[InputGrid|OutputGrid]): typedesc =
   ## [doc]
   type(Grid.new[].size)
 
-template Indices*(grid: InputGrid|OutputGrid): typedesc[tuple] =
+template Indices*(grid: InputGrid|OutputGrid): typedesc =
   ## [doc]
   type(grid.size)
 
@@ -69,16 +69,16 @@ iterator indices*(grid: InputGrid|OutputGrid): auto =
   ## [doc]
   macro buildAction: stmt =
     assert true
-    result = newYieldStmt(newNimNode(nnkPar))
-    for i in 0 .. <grid.nDim:
-      let indexExpr = ident("i" & $i)
-      result[0].add(newColonExpr(ident("field" & $i), indexExpr))
-    for i in countDown(<grid.nDim, 0):
+    let indicesExpr = newBracket()
+    for dim in 0 .. <grid.nDim:
+      indicesExpr.add(ident("i" & $dim))
+    result = newYieldStmt(indicesExpr)
+    for dim in countDown(<grid.nDim, 0):
       let lenExpr = newBracketExpr(
         newDotExpr(ident"grid", ident"size"),
-        newLit(i))
+        newLit(dim))
       result = newForStmt(
-        ident("i" & $i),
+        ident("i" & $dim),
         newCall("..", newLit(0), newCall("<", lenExpr)),
         result)
   buildAction()
@@ -107,74 +107,77 @@ proc `==`*(grid0: InputGrid0, grid1: InputGrid1): bool =
 
 proc `$`*(grid: InputGrid): string =
   ## [doc]
-  proc describeGrid(indices: tuple): string =
+  proc describeGrid[R](indices: array[R, int]): string =
     when indices.len == grid.nDim:
       result = $(grid.get(indices))
     else:
       const delim = "," & repeatStr(grid.nDim - indices.len - 1, "\n") & " "
       result = "["
       for i in 0 .. <grid.size[indices.len]:
+        var augIndices: array[indices.len + 1, int]
+        augIndices[0 .. <indices.len] = indices
+        augIndices[indices.len] = i
         if i > 0: result &= delim
-        result &= describeGrid(indices & (field0: i)).replace("\n", "\n ")
+        result &= describeGrid(augIndices).replace("\n", "\n ")
       result &= "]"
-  describeGrid(())
+  describeGrid(emptyIntArray)
 
 #===============================================================================
 # Tests
 
-# test "grid.indices":
-#   block:
-#     var i = 0
-#     for e in @@["0", "1", "2"].indices:
-#       assert e == (field0: i)
-#       i += 1
-#     assert i == 3
-#   block:
-#     var i = 0
-#     for e in @@[["0", "1"], ["2", "3"]].indices:
-#       assert e == (i div 2, i mod 2)
-#       i += 1
-#     assert i == 4
-#
-# test "grid.items":
-#   block:
-#     var i = 0
-#     for e in @@["0", "1", "2"]:
-#       assert e == $i
-#       i += 1
-#     assert i == 3
-#   block:
-#     var i = 0
-#     for e in @@[["0", "1"], ["2", "3"]]:
-#       assert e == $i
-#       i += 1
-#     assert i == 4
-#
-# test "grid.pairs":
-#   block:
-#     var i = 0
-#     for j, e in @@["0", "1", "2"]:
-#       assert j == (field0: i)
-#       assert e == $i
-#       i += 1
-#     assert i == 3
-#   block:
-#     var i = 0
-#     for j, e in @@[["0", "1"], ["2", "3"]]:
-#       assert j == (i div 2, i mod 2)
-#       assert e == $i
-#       i += 1
-#     assert i == 4
-#
-# test "grid0 == grid1":
-#   assert(@@[0.0, 1.0, 2.0] == @@[0.0, 1.0, 2.0])
-#   assert(@@[0.0, 1.0, 2.0] != @@[0.0, 2.0, 4.0])
-#   assert(@@[[0, 1], [2, 3]] == @@[[0, 1], [2, 3]])
-#   assert(@@[[0, 1], [2, 3]] != @@[[2, 1], [2, 3]])
-#   assert(@@[[["0"]], [["1"]]] == @@[[["0"]], [["1"]]])
-#   assert(@@[[["0"]], [["1"]]] != @@[[["0"]], [["0"]]])
-#
-# test "$grid":
-#   assert($newDenseGrid(int) == "0")
-#   assert($(@@[0.0, 1.0, 2.0]) == "[0.0, 1.0, 2.0]")
-#   assert($(@@[[0], [1], [2]]) == "[[0],\n [1],\n [2]]")
+test "grid.indices":
+  block:
+    var i = 0
+    for e in @@["0", "1", "2"].indices:
+      assert e == [i]
+      i += 1
+    assert i == 3
+  block:
+    var i = 0
+    for e in @@[["0", "1"], ["2", "3"]].indices:
+      assert e == [i div 2, i mod 2]
+      i += 1
+    assert i == 4
+
+test "grid.items":
+  block:
+    var i = 0
+    for e in @@["0", "1", "2"]:
+      assert e == $i
+      i += 1
+    assert i == 3
+  block:
+    var i = 0
+    for e in @@[["0", "1"], ["2", "3"]]:
+      assert e == $i
+      i += 1
+    assert i == 4
+
+test "grid.pairs":
+  block:
+    var i = 0
+    for j, e in @@["0", "1", "2"]:
+      assert j == [i]
+      assert e == $i
+      i += 1
+    assert i == 3
+  block:
+    var i = 0
+    for j, e in @@[["0", "1"], ["2", "3"]]:
+      assert j == [i div 2, i mod 2]
+      assert e == $i
+      i += 1
+    assert i == 4
+
+test "grid0 == grid1":
+  assert(@@[0.0, 1.0, 2.0] == @@[0.0, 1.0, 2.0])
+  assert(@@[0.0, 1.0, 2.0] != @@[0.0, 2.0, 4.0])
+  assert(@@[[0, 1], [2, 3]] == @@[[0, 1], [2, 3]])
+  assert(@@[[0, 1], [2, 3]] != @@[[2, 1], [2, 3]])
+  assert(@@[[["0"]], [["1"]]] == @@[[["0"]], [["1"]]])
+  assert(@@[[["0"]], [["1"]]] != @@[[["0"]], [["0"]]])
+
+test "$grid":
+  assert($newDenseGrid(int) == "0")
+  assert($(@@[0.0, 1.0, 2.0]) == "[0.0, 1.0, 2.0]")
+  assert($(@@[[0], [1], [2]]) == "[[0],\n [1],\n [2]]")
