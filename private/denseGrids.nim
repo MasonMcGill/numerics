@@ -99,27 +99,27 @@ proc data*[n, E](grid: DenseGrid[n, E]): auto =
 proc get*[n, E](grid: DenseGrid[n, E], indices: array): auto =
   ## [doc]
   var data = grid.data
-  forStatic i, 0 .. <indices.len:
-    assert indices[i] < grid.size[i]
-    data += grid.strides[i] * indices[i]
+  forStatic dim, 0 .. <indices.len:
+    assert indices[dim] < grid.size[dim]
+    data += grid.strides[dim] * indices[dim]
   data[]
 
 proc put*[n, E](grid: DenseGrid[n, E], indices: array, element: E) =
   ## [doc]
   var data = grid.data
-  forStatic i, 0 .. <indices.len:
-    assert indices[i] < grid.size[i]
-    data += grid.strides[i] * indices[i]
+  forStatic dim, 0 .. <indices.len:
+    assert indices[dim] < grid.size[dim]
+    data += grid.strides[dim] * indices[dim]
   data[] = element
 
-proc view*[n, E](grid: DenseGrid[n, E], indices: array): DenseGrid[n, E] =
+proc view*[n, E](grid: DenseGrid[n, E], slices: array): DenseGrid[n, E] =
   result.data = grid.data
-  for i in 0 .. <n:
-    assert indices[i].first <= indices[i].last + 1
-    assert indices[i].first >= 0 and indices[i].last < grid.size[i]
-    result.size[i] = indices[i].len
-    result.strides[i] = indices[i].stride * grid.strides[i]
-    result.data += indices[i].first * grid.strides[i]
+  forStatic dim, 0 .. <n:
+    assert slices[dim].first <= slices[dim].last + 1
+    assert slices[dim].first >= 0 and slices[dim].last < grid.size[dim]
+    result.size[dim] = slices[dim].len
+    result.strides[dim] = slices[dim].stride * grid.strides[dim]
+    result.data += slices[dim].first * grid.strides[dim]
 
 #===============================================================================
 # Tests

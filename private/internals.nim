@@ -6,6 +6,12 @@ import sequtils
 import strutils
 
 #===============================================================================
+# Constants
+
+const maxNDim = 8
+const maxNZippedGrids = 4
+
+#===============================================================================
 # Pointer Arithmetic
 
 proc `+=`[E](p: var ptr E, i: int) =

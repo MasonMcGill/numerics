@@ -34,12 +34,12 @@ proc get*[E](slice: StridedSlice[E], indices: array[1, int]): E =
   ## [doc]
   slice.first + slice.stride * indices[0]
 
-proc view*[E](slice: StridedSlice[E], indices: array[1, StridedSlice[int]]):
+proc view*[E](slice0: StridedSlice[E], slice1: array[1, StridedSlice[int]]):
               StridedSlice[E] =
   ## [doc]
-  result.first = slice.first + indices[0].first * slice.stride
-  result.last = slice.first + indices[0].last * slice.stride
-  result.stride = slice.stride * indices[0].stride
+  result.first = slice0.first + slice1[0].first * slice0.stride
+  result.last = slice0.first + slice1[0].last * slice0.stride
+  result.stride = slice0.stride * slice1[0].stride
 
 proc `$`*[E](slice: StridedSlice[E]): string =
   ## [doc]
