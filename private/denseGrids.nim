@@ -1,5 +1,48 @@
 #===============================================================================
-# Definitions
+# Private Definitions
+
+proc sizeAlongDim(a: any, dim: static[int]): int =
+  when dim == 0: a.len
+  else: a[0].sizeAlongDim(dim - 1)
+
+proc lowAlongDim(a: any, dim: static[int]): int =
+  when dim == 0: a.low
+  else: a[0].lowAlongDim(dim - 1)
+
+proc highAlongDim(a: any, dim: static[int]): int =
+  when dim == 0: a.high
+  else: a[0].highAlongDim(dim - 1)
+
+template nestLevel(a: array): expr =
+  when a[0] is array: 1 + nestLevel(a[0])
+  else: 1
+
+template BaseElement(a: array): expr  =
+  when a[0] is array: BaseElement(a[0])
+  else: (type(a[0]))
+
+proc copyArrayToGridStmt(aNDim: int, elementType, arrayExpr: PNimrodNode):
+                         PNimrodNode {.compileTime.} =
+  let constrExpr = newCall("newDenseGrid", elementType)
+  for i in 0 .. <aNDim:
+    constrExpr.add(newCall("sizeAlongDim", arrayExpr, newLit(i)))
+  let indicesExpr = newBracket()
+  for dim in 0 .. <aNDim:
+    let lowExpr = newCall("lowAlongDim", arrayExpr, newLit(dim))
+    indicesExpr.add(newCall("-", ident("i" & $dim), lowExpr))
+  var getExpr = arrayExpr
+  for dim in 0 .. <aNDim:
+    getExpr = newBracketExpr(getExpr, ident("i" & $dim))
+  var putStmt = newCall("put", ident"result", indicesExpr, getExpr)
+  for dim in countDown(<aNDim, 0):
+    let lowExpr = newCall("lowAlongDim", arrayExpr, newLit(dim))
+    let highExpr = newCall("highAlongDim", arrayExpr, newLit(dim))
+    let boundsExpr = newCall("..", lowExpr, highExpr)
+    putStmt = newForStmt(ident("i" & $dim), boundsExpr, putStmt)
+  newStmtList(newAssignment(ident"result", constrExpr), putStmt)
+
+#===============================================================================
+# Public Definitions
 
 type DenseGrid* {.shallow.} [nDim: static[int]; Element] = object
   ## [doc]
@@ -40,51 +83,12 @@ converter `@@`*[E](element: E): DenseGrid[0, E] =
   result = newDenseGrid(E)
   result.put(emptyIntArray, element)
 
-proc sizeAlongDim(a: any, dim: static[int]): int =
-  when dim == 0: a.len
-  else: a[0].sizeAlongDim(dim - 1)
-
-proc lowAlongDim(a: any, dim: static[int]): int =
-  when dim == 0: a.low
-  else: a[0].lowAlongDim(dim - 1)
-
-proc highAlongDim(a: any, dim: static[int]): int =
-  when dim == 0: a.high
-  else: a[0].highAlongDim(dim - 1)
-
-template nestLevel(a: array): expr =
-  when a[0] is array: 1 + nestLevel(a[0])
-  else: 1
-
-template BaseElement(a: array): expr  =
-  when a[0] is array: BaseElement(a[0])
-  else: (type(a[0]))
-
-proc copyArrayToGridStmt(aNDim: int): PNimrodNode {.compileTime.} =
-  let constrExpr = newCall(bindSym"newDenseGrid", ident"ABaseElement")
-  for i in 0 .. <aNDim:
-    constrExpr.add(newCall(bindSym"sizeAlongDim", ident"a", newLit(i)))
-  let indicesExpr = newBracket()
-  for dim in 0 .. <aNDim:
-    let lowExpr = newCall(ident"lowAlongDim", ident"a", newLit(dim))
-    indicesExpr.add(newCall("-", ident("i" & $dim), lowExpr))
-  var getExpr = ident"a"
-  for dim in 0 .. <aNDim:
-    getExpr = newBracketExpr(getExpr, ident("i" & $dim))
-  var putStmt = newCall("put", ident"result", indicesExpr, getExpr)
-  for dim in countDown(<aNDim, 0):
-    let lowExpr = newCall(ident"lowAlongDim", ident"a", newLit(dim))
-    let highExpr = newCall(ident"highAlongDim", ident"a", newLit(dim))
-    let boundsExpr = newCall("..", lowExpr, highExpr)
-    putStmt = newForStmt(ident("i" & $dim), boundsExpr, putStmt)
-  newStmtList(newAssignment(ident"result", constrExpr), putStmt)
-
 converter `@@`*[R, E](a: array[R, E]): auto =
   ## [doc]
   type ABaseElement = a.BaseElement
   const aNDim = a.nestLevel
   macro initResult: stmt =
-    copyArrayToGridStmt(aNDim)
+    copyArrayToGridStmt(aNDim, ident"ABaseElement", ident"a")
   initResult()
 
 proc size*[n, E](grid: DenseGrid[n, E]): array =

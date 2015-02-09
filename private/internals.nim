@@ -9,7 +9,7 @@ import strutils
 # Constants
 
 const maxNDim = 8
-const maxNZippedGrids = 4
+# const maxNZippedGrids = 4
 
 #===============================================================================
 # Pointer Arithmetic
@@ -56,6 +56,11 @@ template forStatic(index: expr, slice: Slice[int], pred: stmt):
         const index = i
         pred
     iterateFor a, b
+
+proc toSeq(slice: Slice[int]): seq[int] =
+  result = newSeq[int]()
+  for i in slice.a .. slice.b:
+    result.add i
 
 # template staticMap(slice: Slice[int], pred: expr): expr =
 #   ## [doc]
