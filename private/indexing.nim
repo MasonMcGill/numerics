@@ -1,16 +1,26 @@
 #===============================================================================
 # Definitions
 
+template areAllInts(indices: tuple, dim: 0): bool =
+  when compiles(indices[dim]):
+    indices[dim] is int and indices.areAllInts(dim + 1)
+  else:
+    true
+
+template areAllInts(indices: tuple): bool =
+  indices.areAllInts(0)
+
 proc `[]`*(grid: InputGrid, indices: tuple): auto =
   ## [doc]
-  when indices.len < grid.nDim:
-    template getSlice(dim: int): expr = 0 .. <grid.size[dim]
-    let slices = (indices.len .. <grid.nDim).staticMap(getSlice)
-    grid[indices & slices]
-  elif indices.nSlices == 0:
+  when indices.areAllInts == indices.len:
     grid.get(indices)
   else:
-    grid.view(indices.map(upgradeSlice))
+    var slices {.noInit.}: array[grid.nDim, StridedSlice[int]]
+    forStatic dim, 0 .. <indices.len:
+      slices[dim] = indices[dim]
+    forStatic dim, indices.len .. <grid.nDim:
+      slices[dim] = (0 .. grid.size[dim]).by(1)
+    grid.view(slices)
 
 macro `[]`*(grid: InputGrid, indices: varargs[expr]): expr =
   ## [doc]
@@ -18,19 +28,20 @@ macro `[]`*(grid: InputGrid, indices: varargs[expr]): expr =
 
 proc `[]=`*(grid: OutputGrid, indices: tuple, value: any) =
   ## [doc]
-  when indices.len < grid.nDim:
-    template getSlice(dim: int): expr = 0 .. <grid.size[dim]
-    let slices = (indices.len .. <grid.nDim).staticMap(getSlice)
-    grid[indices & slices] = value
-  elif indices.nSlices == 0:
+  when indices.areAllInts == indices.len:
     grid.put(indices, value)
   else:
-    let gridView = grid.view(indices.map(upgradeSlice))
+    var slices {.noInit.}: array[grid.nDim, StridedSlice[int]]
+    forStatic dim, 0 .. <indices.len:
+      slices[dim] = indices[dim]
+    forStatic dim, indices.len .. <grid.nDim:
+      slices[dim] = (0 .. grid.size[dim]).by(1)
+    let gridView = grid.view(slices)
     for i in gridView.indices:
       when value is InputGrid:
-        gridView[i] = value[i.get(0 .. <value.nDim)]
+        gridView.put(i, value.get(i[0 .. <value.nDim]))
       else:
-        gridView[i] = value
+        gridView.put(i, value)
 
 macro `[]=`*(grid: OutputGrid, indicesAndValue: varargs[expr]): stmt =
   ## [doc]
