@@ -60,28 +60,31 @@ template BaseElement(a: array): expr  =
   when a[0] is array: BaseElement(a[0])
   else: (type(a[0]))
 
+proc copyArrayToGridStmt(aNDim: int): PNimrodNode {.compileTime.} =
+  let constrExpr = newCall(bindSym"newDenseGrid", ident"ABaseElement")
+  for i in 0 .. <aNDim:
+    constrExpr.add(newCall(bindSym"sizeAlongDim", ident"a", newLit(i)))
+  let indicesExpr = newBracket()
+  for dim in 0 .. <aNDim:
+    let lowExpr = newCall(ident"lowAlongDim", ident"a", newLit(dim))
+    indicesExpr.add(newCall("-", ident("i" & $dim), lowExpr))
+  var getExpr = ident"a"
+  for dim in 0 .. <aNDim:
+    getExpr = newBracketExpr(getExpr, ident("i" & $dim))
+  var putStmt = newCall("put", ident"result", indicesExpr, getExpr)
+  for dim in countDown(<aNDim, 0):
+    let lowExpr = newCall(ident"lowAlongDim", ident"a", newLit(dim))
+    let highExpr = newCall(ident"highAlongDim", ident"a", newLit(dim))
+    let boundsExpr = newCall("..", lowExpr, highExpr)
+    putStmt = newForStmt(ident("i" & $dim), boundsExpr, putStmt)
+  newStmtList(newAssignment(ident"result", constrExpr), putStmt)
+
 converter `@@`*[R, E](a: array[R, E]): auto =
   ## [doc]
   type ABaseElement = a.BaseElement
   const aNDim = a.nestLevel
   macro initResult: stmt =
-    let constrExpr = newCall(bindSym"newDenseGrid", ident"ABaseElement")
-    for i in 0 .. <aNDim:
-      constrExpr.add(newCall(bindSym"sizeAlongDim", ident"a", newLit(i)))
-    let indicesExpr = newBracket()
-    for dim in 0 .. <aNDim:
-      let lowExpr = newCall(ident"lowAlongDim", ident"a", newLit(dim))
-      indicesExpr.add(newCall("-", ident("i" & $dim), lowExpr))
-    var getExpr = ident"a"
-    for dim in 0 .. <aNDim:
-      getExpr = newBracketExpr(getExpr, ident("i" & $dim))
-    var putStmt = newCall("put", ident"result", indicesExpr, getExpr)
-    for dim in countDown(<aNDim, 0):
-      let lowExpr = newCall(ident"lowAlongDim", ident"a", newLit(dim))
-      let highExpr = newCall(ident"highAlongDim", ident"a", newLit(dim))
-      let boundsExpr = newCall("..", lowExpr, highExpr)
-      putStmt = newForStmt(ident("i" & $dim), boundsExpr, putStmt)
-    newStmtList(newAssignment(ident"result", constrExpr), putStmt)
+    copyArrayToGridStmt(aNDim)
   initResult()
 
 proc size*[n, E](grid: DenseGrid[n, E]): array =
