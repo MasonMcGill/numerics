@@ -106,10 +106,26 @@ test "inputGrid.view(slices)":
     assert gridView.get([1, 1]) == ["2", "2"]
 
 test "inputGrid.addDim(dim)":
-  discard
+  type CustomGrid = object
+    typeClassTag_InputGrid: byte
+  proc size(grid: CustomGrid): array[2, int] =
+    [3, 4]
+  proc get(grid: CustomGrid, indices: array[2, int]): array[2, string] =
+    [$indices[0], $indices[1]]
+  block:
+    # test here
+    discard
 
 test "inputGrid.delDim(dim)":
-  discard
+  type CustomGrid = object
+    typeClassTag_InputGrid: byte
+  proc size(grid: CustomGrid): array[2, int] =
+    [3, 4]
+  proc get(grid: CustomGrid, indices: array[2, int]): array[2, string] =
+    [$indices[0], $indices[1]]
+  block:
+    # test here
+    discard
 
 test "outputGrid.view(slices)":
   type CustomGrid = object
@@ -141,16 +157,58 @@ test "outputGrid.view(slices)":
     assert "[2, 2]: 7" in grid.record[]
 
 test "outputGrid.addDim(dim)":
-  discard
+  type CustomGrid = object
+    record: ref seq[string]
+    typeClassTag_OutputGrid: byte
+  proc size(grid: CustomGrid): array[2, int] =
+    [3, 4]
+  proc put(grid: CustomGrid, indices: array[2, int], value: int) =
+    grid.record[].add("[" & $indices[0] & ", " & $indices[1] & "]: " & $value)
+  block:
+    # test here
+    discard
 
 test "outputGrid.delDim(dim)":
-  discard
+  type CustomGrid = object
+    record: ref seq[string]
+    typeClassTag_OutputGrid: byte
+  proc size(grid: CustomGrid): array[2, int] =
+    [3, 4]
+  proc put(grid: CustomGrid, indices: array[2, int], value: int) =
+    grid.record[].add("[" & $indices[0] & ", " & $indices[1] & "]: " & $value)
+  block:
+    # test here
+    discard
 
 test "gridView.view(slices)":
-  discard
+  type CustomGrid = object
+    typeClassTag_InputGrid: byte
+  proc size(grid: CustomGrid): array[2, int] =
+    [3, 4]
+  proc get(grid: CustomGrid, indices: array[2, int]): array[2, string] =
+    [$indices[0], $indices[1]]
+  block:
+    # test here
+    discard
 
 test "gridView.addDim(dim)":
-  discard
+  type CustomGrid = object
+    typeClassTag_InputGrid: byte
+  proc size(grid: CustomGrid): array[2, int] =
+    [3, 4]
+  proc get(grid: CustomGrid, indices: array[2, int]): array[2, string] =
+    [$indices[0], $indices[1]]
+  block:
+    # test here
+    discard
 
 test "gridView.delDim(dim)":
-  discard
+  type CustomGrid = object
+    typeClassTag_InputGrid: byte
+  proc size(grid: CustomGrid): array[2, int] =
+    [3, 4]
+  proc get(grid: CustomGrid, indices: array[2, int]): array[2, string] =
+    [$indices[0], $indices[1]]
+  block:
+    # test here
+    discard
