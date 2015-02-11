@@ -135,3 +135,32 @@ template test(name: expr, action: stmt): stmt {.immediate.} =
     except AssertionError:
       echo "Test failed: \"", $name, "\"."
       stderr.write(getCurrentException().getStackTrace())
+
+#===============================================================================
+# Test Grids
+
+type TestInputGrid3x4 = object
+  typeClassTag_InputGrid: byte
+
+proc newTestInputGrid3x4: TestInputGrid3x4 =
+  discard
+
+proc size(grid: TestInputGrid3x4): array[2, int] =
+  [3, 4]
+
+proc get(grid: TestInputGrid3x4, indices: array[2, int]): array[2, string] =
+  [$indices[0], $indices[1]]
+
+type TestOutputGrid3x4 = object
+  record: ref seq[string]
+  typeClassTag_OutputGrid: byte
+
+proc newTestOutputGrid3x4: TestOutputGrid3x4 =
+  result.record = new(seq[string])
+  result.record[] = newSeq[string]()
+
+proc size(grid: TestOutputGrid3x4): array[2, int] =
+  [3, 4]
+
+proc put(grid: TestOutputGrid3x4, indices: array[2, int], value: int) =
+  grid.record[].add("[" & $indices[0] & ", " & $indices[1] & "]: " & $value)

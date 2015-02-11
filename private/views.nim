@@ -1,9 +1,9 @@
 #===============================================================================
 # Definitions
 
-type View*[Grid: InputGrid|OutputGrid, metaIndices: static[seq[int]]] = object
+type View*[Grid: InputGrid|OutputGrid] = object
   ## [doc]
-  grid: Grid
+  base: Grid
   slices: array[maxNDim, StridedSlice[int]]
   when Grid is InputGrid:
     typeClassTag_InputGrid: byte
@@ -14,201 +14,120 @@ proc view*(grid: InputGrid|OutputGrid, slices: array): auto =
   ## [doc]
   static: assert grid.nDim <= maxNDim
   static: assert grid.nDim == slices.len
-  const metaIndices = toSeq(0 .. <grid.nDim)
-  result = View[type(grid), metaIndices](grid: grid)
+  result = View[type(grid)](base: grid)
   result.slices[0 .. <slices.len] = slices
 
-proc addDim*(grid: InputGrid|OutputGrid, dim: static[int]): auto =
+proc size*[G](grid: View[G]): auto =
   ## [doc]
-  const metaIndices = toSeq(0 .. <dim) & toSeq(dim + 1 .. grid.nDim)
-  result = View[type(grid), metaIndices](grid: grid)
-  for dim in 0 .. <grid.nDim:
-    result.strides[dim] = 0 .. <grid.size[dim]
-
-proc delDim*(grid: InputGrid|OutputGrid, dim: static[int]): auto =
-  ## [doc]
-  const metaIndices = toSeq(0 .. <dim) & [-1] & toSeq(dim + 1 .. <grid.nDim)
-  result = View[type(grid), metaIndices](grid: grid)
-  for dim in 0 .. <grid.nDim:
-    result.strides[dim] = 0 .. <grid.size[dim]
-
-proc get*[G, m](view: View[G, m], indices: array): auto =
-  ## [doc]
-  static: assert view is InputGrid
-  var adjustedIndices {.noInit.}: view.grid.Indices
-  forStatic dim, 0 .. <adjustedIndices.len:
-    const metaIndex = view.metaIndices[dim]
-    let index = when metaIndex >= 0: indices[metaIndex] else: 0
-    let slice = view.slices[dim]
-    adjustedIndices[dim] = slice.first + slice.stride * index
-  view.grid.get(adjustedIndices)
-
-proc size*[G, m](view: View[G, m]): auto =
-  ## [doc]
-  var result {.noInit.}: view.grid.Indices
+  var result {.noInit.}: grid.base.Indices
   forStatic dim, 0 .. <result.len:
-    result[dim] = view.slices[dim].len
+    result[dim] = grid.slices[dim].len
   result
 
-proc put*[G, m](view: View[G, m], indices: array, value: any) =
+proc get*[G](grid: View[G], indices: array): auto =
   ## [doc]
-  static: assert view is OutputGrid
-  var adjustedIndices {.noInit.}: view.grid.Indices
+  static: assert grid is InputGrid
+  var adjustedIndices {.noInit.}: grid.base.Indices
   forStatic dim, 0 .. <adjustedIndices.len:
-    const metaIndex = view.metaIndices[dim]
-    let index = when metaIndex >= 0: indices[metaIndex] else: 0
-    let slice = view.slices[dim]
-    adjustedIndices[dim] = slice.first + slice.stride * index
-  view.grid.put(adjustedIndices, value)
+    let slice = grid.slices[dim]
+    adjustedIndices[dim] = slice.first + slice.stride * indices[dim]
+  grid.base.get(adjustedIndices)
 
-proc view*[G, m](view: View[G, m], slices: array): auto =
+proc put*[G](grid: View[G], indices: array, value: any) =
   ## [doc]
-  result = view
-  forStatic dim, 0 .. <view.grid.nDim:
-    let slice0 = view.slices[dim]
+  static: assert grid is OutputGrid
+  var adjustedIndices {.noInit.}: grid.base.Indices
+  forStatic dim, 0 .. <adjustedIndices.len:
+    let slice = grid.slices[dim]
+    adjustedIndices[dim] = slice.first + slice.stride * indices[dim]
+  grid.base.put(adjustedIndices, value)
+
+proc view*[G](grid: View[G], slices: array): auto =
+  ## [doc]
+  result = grid
+  forStatic dim, 0 .. <grid.base.nDim:
+    let slice0 = grid.slices[dim]
     let slice1 = slices[dim]
-    result.slices[dim].first = slice0.first + slice1[0].first * slice0.stride
-    result.slices[dim].last = slice0.first + slice1[0].last * slice0.stride
-    result.slices[dim].stride = slice0.stride * slice1[0].stride
+    result.slices[dim].first = slice0.first + slice1.first * slice0.stride
+    result.slices[dim].last = slice0.first + slice1.last * slice0.stride
+    result.slices[dim].stride = slice0.stride * slice1.stride
 
-proc addDim*[G, m](view: View[G, m], dim: static[int]): auto =
+proc box*[G](grid: View[G], dim: static[int]): auto =
   ## [doc]
-  const m1 = m[0 .. <dim] & m[dim + 1 .. view.grid.nDim]
-  View[G, m1](grid: view.grid, strides: view.strides)
+  static: assert dim >= 0 and dim < grid.base.nDim
+  static: assert grid.base.nDim < maxNDim
+  const gridNDim = grid.base.nDim
+  let boxedBase = grid.base.box(dim)
+  result = View[type(boxedBase)](base: boxedBase)
+  result.slices[0 .. <dim] = grid.slices[0 .. <dim]
+  result.slices[dim] = (0..0).by(1)
+  result.slices[dim + 1 .. gridNDim] = grid.slices[dim .. <gridNDim]
 
-proc delDim*[G, m](view: View[G, m], dim: static[int]): auto =
+proc unbox*[G](grid: View[G], dim: static[int]): auto =
   ## [doc]
-  const m1 = m[0 .. <dim] & [-1] & m[dim + 1 .. <view.grid.nDim]
-  View[G, m1](grid: view.grid, strides: view.strides)
+  static: assert dim >= 0 and dim < grid.base.nDim
+  const gridNDim = grid.base.nDim
+  let unboxedBase = grid.base.unbox(dim)
+  result = View[type(unboxedBase)](base: unboxedBase)
+  result.slices[0 .. <dim] = grid.slices[0 .. <dim]
+  result.slices[dim .. <gridNDim - 1] = grid.slices[dim + 1 .. <gridNDim]
 
 #===============================================================================
 # Tests
 
 test "inputGrid.view(slices)":
-  type CustomGrid = object
-    typeClassTag_InputGrid: byte
-  proc size(grid: CustomGrid): array[2, int] =
-    [3, 4]
-  proc get(grid: CustomGrid, indices: array[2, int]): array[2, string] =
-    [$indices[0], $indices[1]]
   block:
-    let gridView = CustomGrid().view([(1..0).by(1), (0..2).by(2)])
-    assert gridView.size == [0, 2]
+    let grid = newTestInputGrid3x4().view([(1..0).by(1), (0..2).by(2)])
+    assert grid.size == [0, 2]
   block:
-    let gridView = CustomGrid().view([(1..2).by(1), (1..0).by(1)])
-    assert gridView.size == [2, 0]
+    let grid = newTestInputGrid3x4().view([(1..2).by(1), (1..0).by(1)])
+    assert grid.size == [2, 0]
   block:
-    let gridView = CustomGrid().view([(1..2).by(1), (0..2).by(2)])
-    assert gridView.size == [2, 2]
-    assert gridView.get([0, 0]) == ["1", "0"]
-    assert gridView.get([0, 1]) == ["1", "2"]
-    assert gridView.get([1, 0]) == ["2", "0"]
-    assert gridView.get([1, 1]) == ["2", "2"]
-
-test "inputGrid.addDim(dim)":
-  type CustomGrid = object
-    typeClassTag_InputGrid: byte
-  proc size(grid: CustomGrid): array[2, int] =
-    [3, 4]
-  proc get(grid: CustomGrid, indices: array[2, int]): array[2, string] =
-    [$indices[0], $indices[1]]
-  block:
-    # test here
-    discard
-
-test "inputGrid.delDim(dim)":
-  type CustomGrid = object
-    typeClassTag_InputGrid: byte
-  proc size(grid: CustomGrid): array[2, int] =
-    [3, 4]
-  proc get(grid: CustomGrid, indices: array[2, int]): array[2, string] =
-    [$indices[0], $indices[1]]
-  block:
-    # test here
-    discard
+    let grid = newTestInputGrid3x4().view([(1..2).by(1), (0..2).by(2)])
+    assert grid.size == [2, 2]
+    assert grid.get([0, 0]) == ["1", "0"]
+    assert grid.get([0, 1]) == ["1", "2"]
+    assert grid.get([1, 0]) == ["2", "0"]
+    assert grid.get([1, 1]) == ["2", "2"]
 
 test "outputGrid.view(slices)":
-  type CustomGrid = object
-    record: ref seq[string]
-    typeClassTag_OutputGrid: byte
-  proc size(grid: CustomGrid): array[2, int] =
-    [3, 4]
-  proc put(grid: CustomGrid, indices: array[2, int], value: int) =
-    grid.record[].add("[" & $indices[0] & ", " & $indices[1] & "]: " & $value)
   block:
-    let gridView = CustomGrid().view([(1..0).by(1), (0..2).by(2)])
-    assert gridView.size == [0, 2]
+    let grid = newTestOutputGrid3x4().view([(1..0).by(1), (0..2).by(2)])
+    assert grid.size == [0, 2]
   block:
-    let gridView = CustomGrid().view([(1..2).by(1), (1..0).by(1)])
-    assert gridView.size == [2, 0]
+    let grid = newTestOutputGrid3x4().view([(1..2).by(1), (1..0).by(1)])
+    assert grid.size == [2, 0]
   block:
-    let grid = CustomGrid(record: new(seq[string]))
-    grid.record[] = newSeq[string]()
-    let gridView = grid.view([(1..2).by(1), (0..2).by(2)])
-    gridView.put([0, 0], 4)
-    gridView.put([0, 1], 5)
-    gridView.put([1, 0], 6)
-    gridView.put([1, 1], 7)
-    assert gridView.size == [2, 2]
-    assert grid.record[].len == 4
-    assert "[1, 0]: 4" in grid.record[]
-    assert "[1, 2]: 5" in grid.record[]
-    assert "[2, 0]: 6" in grid.record[]
-    assert "[2, 2]: 7" in grid.record[]
+    let grid0 = newTestOutputGrid3x4()
+    let grid1 = grid0.view([(1..2).by(1), (0..2).by(2)])
+    grid1.put([0, 0], 4)
+    grid1.put([0, 1], 5)
+    grid1.put([1, 0], 6)
+    grid1.put([1, 1], 7)
+    assert grid1.size == [2, 2]
+    assert grid0.record[].len == 4
+    assert "[1, 0]: 4" in grid0.record[]
+    assert "[1, 2]: 5" in grid0.record[]
+    assert "[2, 0]: 6" in grid0.record[]
+    assert "[2, 2]: 7" in grid0.record[]
 
-test "outputGrid.addDim(dim)":
-  type CustomGrid = object
-    record: ref seq[string]
-    typeClassTag_OutputGrid: byte
-  proc size(grid: CustomGrid): array[2, int] =
-    [3, 4]
-  proc put(grid: CustomGrid, indices: array[2, int], value: int) =
-    grid.record[].add("[" & $indices[0] & ", " & $indices[1] & "]: " & $value)
-  block:
-    # test here
-    discard
+test "grid.view(slices)":
+  let grid0 = newTestInputGrid3x4().view([(1..2).by(1), (0..3).by(1)])
+  let grid1 = grid0.view([(0..1).by(1), (1..3).by(2)])
+  assert grid1.size == [2, 2]
+  assert grid1.get([0, 0]) == ["1", "1"]
+  assert grid1.get([0, 1]) == ["1", "3"]
+  assert grid1.get([1, 0]) == ["2", "1"]
+  assert grid1.get([1, 1]) == ["2", "3"]
 
-test "outputGrid.delDim(dim)":
-  type CustomGrid = object
-    record: ref seq[string]
-    typeClassTag_OutputGrid: byte
-  proc size(grid: CustomGrid): array[2, int] =
-    [3, 4]
-  proc put(grid: CustomGrid, indices: array[2, int], value: int) =
-    grid.record[].add("[" & $indices[0] & ", " & $indices[1] & "]: " & $value)
-  block:
-    # test here
-    discard
+test "grid.box(dim)":
+  proc box(grid: TestInputGrid3x4, dim: int): auto = newDenseGrid(int, 3, 1, 4)
+  let grid0 = newTestInputGrid3x4().view([(1..2).by(1), (0..3).by(1)])
+  let grid1 = grid0.box(1)
+  assert grid1.size == [2, 1, 4]
 
-test "gridView.view(slices)":
-  type CustomGrid = object
-    typeClassTag_InputGrid: byte
-  proc size(grid: CustomGrid): array[2, int] =
-    [3, 4]
-  proc get(grid: CustomGrid, indices: array[2, int]): array[2, string] =
-    [$indices[0], $indices[1]]
-  block:
-    # test here
-    discard
-
-test "gridView.addDim(dim)":
-  type CustomGrid = object
-    typeClassTag_InputGrid: byte
-  proc size(grid: CustomGrid): array[2, int] =
-    [3, 4]
-  proc get(grid: CustomGrid, indices: array[2, int]): array[2, string] =
-    [$indices[0], $indices[1]]
-  block:
-    # test here
-    discard
-
-test "gridView.delDim(dim)":
-  type CustomGrid = object
-    typeClassTag_InputGrid: byte
-  proc size(grid: CustomGrid): array[2, int] =
-    [3, 4]
-  proc get(grid: CustomGrid, indices: array[2, int]): array[2, string] =
-    [$indices[0], $indices[1]]
-  block:
-    # test here
-    discard
+test "grid.unbox(dim)":
+  proc unbox(grid: TestInputGrid3x4, dim: int): auto = newDenseGrid(int, 3)
+  let grid0 = newTestInputGrid3x4().view([(1..2).by(1), (0..3).by(1)])
+  let grid1 = grid0.unbox(1)
+  assert grid1.size == [2]
