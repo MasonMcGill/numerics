@@ -77,13 +77,13 @@ proc unbox*[G](grid: View[G], dim: static[int]): auto =
 
 test "inputGrid.view(slices)":
   block:
-    let grid = newTestInputGrid3x4().view([(1..0).by(1), (0..2).by(2)])
+    let grid = newTestInputGrid2D(3, 4).view([(1..0).by(1), (0..2).by(2)])
     assert grid.size == [0, 2]
   block:
-    let grid = newTestInputGrid3x4().view([(1..2).by(1), (1..0).by(1)])
+    let grid = newTestInputGrid2D(3, 4).view([(1..2).by(1), (1..0).by(1)])
     assert grid.size == [2, 0]
   block:
-    let grid = newTestInputGrid3x4().view([(1..2).by(1), (0..2).by(2)])
+    let grid = newTestInputGrid2D(3, 4).view([(1..2).by(1), (0..2).by(2)])
     assert grid.size == [2, 2]
     assert grid.get([0, 0]) == ["1", "0"]
     assert grid.get([0, 1]) == ["1", "2"]
@@ -92,13 +92,13 @@ test "inputGrid.view(slices)":
 
 test "outputGrid.view(slices)":
   block:
-    let grid = newTestOutputGrid3x4().view([(1..0).by(1), (0..2).by(2)])
+    let grid = newTestOutputGrid2D(3, 4).view([(1..0).by(1), (0..2).by(2)])
     assert grid.size == [0, 2]
   block:
-    let grid = newTestOutputGrid3x4().view([(1..2).by(1), (1..0).by(1)])
+    let grid = newTestOutputGrid2D(3, 4).view([(1..2).by(1), (1..0).by(1)])
     assert grid.size == [2, 0]
   block:
-    let grid0 = newTestOutputGrid3x4()
+    let grid0 = newTestOutputGrid2D(3, 4)
     let grid1 = grid0.view([(1..2).by(1), (0..2).by(2)])
     grid1.put([0, 0], 4)
     grid1.put([0, 1], 5)
@@ -112,7 +112,7 @@ test "outputGrid.view(slices)":
     assert "[2, 2]: 7" in grid0.record[]
 
 test "grid.view(slices)":
-  let grid0 = newTestInputGrid3x4().view([(1..2).by(1), (0..3).by(1)])
+  let grid0 = newTestInputGrid2D(3, 4).view([(1..2).by(1), (0..3).by(1)])
   let grid1 = grid0.view([(0..1).by(1), (1..3).by(2)])
   assert grid1.size == [2, 2]
   assert grid1.get([0, 0]) == ["1", "1"]
@@ -121,13 +121,13 @@ test "grid.view(slices)":
   assert grid1.get([1, 1]) == ["2", "3"]
 
 test "grid.box(dim)":
-  proc box(grid: TestInputGrid3x4, dim: int): auto = newDenseGrid(int, 3, 1, 4)
-  let grid0 = newTestInputGrid3x4().view([(1..2).by(1), (0..3).by(1)])
+  proc box(grid: TestInputGrid2D, dim: int): auto = newDenseGrid(int, 3, 1, 4)
+  let grid0 = newTestInputGrid2D(3, 4).view([(1..2).by(1), (0..3).by(1)])
   let grid1 = grid0.box(1)
   assert grid1.size == [2, 1, 4]
 
 test "grid.unbox(dim)":
-  proc unbox(grid: TestInputGrid3x4, dim: int): auto = newDenseGrid(int, 3)
-  let grid0 = newTestInputGrid3x4().view([(1..2).by(1), (0..3).by(1)])
+  proc unbox(grid: TestInputGrid2D, dim: int): auto = newDenseGrid(int, 3)
+  let grid0 = newTestInputGrid2D(3, 4).view([(1..2).by(1), (0..3).by(1)])
   let grid1 = grid0.unbox(1)
   assert grid1.size == [2]

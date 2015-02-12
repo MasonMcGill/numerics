@@ -139,28 +139,25 @@ template test(name: expr, action: stmt): stmt {.immediate.} =
 #===============================================================================
 # Test Grids
 
-type TestInputGrid3x4 = object
+type TestInputGrid2D = object
+  size: array[2, int]
   typeClassTag_InputGrid: byte
 
-proc newTestInputGrid3x4: TestInputGrid3x4 =
-  discard
+proc newTestInputGrid2D(size0, size1: int): TestInputGrid2D =
+  TestInputGrid2D(size: [size0, size1])
 
-proc size(grid: TestInputGrid3x4): array[2, int] =
-  [3, 4]
-
-proc get(grid: TestInputGrid3x4, indices: array[2, int]): array[2, string] =
+proc get(grid: TestInputGrid2D, indices: array[2, int]): array[2, string] =
   [$indices[0], $indices[1]]
 
-type TestOutputGrid3x4 = object
+type TestOutputGrid2D = object
+  size: array[2, int]
   record: ref seq[string]
   typeClassTag_OutputGrid: byte
 
-proc newTestOutputGrid3x4: TestOutputGrid3x4 =
+proc newTestOutputGrid2D(size0, size1: int): TestOutputGrid2D =
+  result.size = [size0, size1]
   result.record = new(seq[string])
   result.record[] = newSeq[string]()
 
-proc size(grid: TestOutputGrid3x4): array[2, int] =
-  [3, 4]
-
-proc put(grid: TestOutputGrid3x4, indices: array[2, int], value: int) =
+proc put(grid: TestOutputGrid2D, indices: array[2, int], value: int) =
   grid.record[].add("[" & $indices[0] & ", " & $indices[1] & "]: " & $value)
