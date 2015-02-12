@@ -11,12 +11,12 @@ type Boxed[Grid: InputGrid|OutputGrid, metaIndices: static[seq[int]]] = object
 
 proc box*(grid: InputGrid|OutputGrid, dim: static[int]): auto =
   ## [doc]
-  const metaIndices = toSeq(0 .. <dim) & toSeq(dim + 1 .. grid.nDim)
+  const metaIndices = toSeq(0 .. <dim) & @[-1] & toSeq(dim .. <grid.nDim)
   Boxed[type(grid), metaIndices](base: grid)
 
 proc unbox*(grid: InputGrid|OutputGrid, dim: static[int]): auto =
   ## [doc]
-  const metaIndices = toSeq(0 .. <dim) & [-1] & toSeq(dim + 1 .. <grid.nDim)
+  const metaIndices = toSeq(0 .. <dim) & toSeq(dim + 1 .. <grid.nDim)
   Boxed[type(grid), metaIndices](base: grid)
 
 proc get*[G, m](grid: Boxed[G, m], indices: array): auto =
@@ -32,24 +32,24 @@ proc put*[G, m](grid: Boxed[G, m], indices: array, value: any) =
   static: assert grid is OutputGrid
   var adjustedIndices {.noInit.}: grid.base.Indices
   forStatic dim, 0 .. <adjustedIndices.len:
-    adjustedIndices[dim] = when m[dim] >= 0: indices[m[dim]] else: 0
+    adjustedIndices[dim] = when dim in m: indices[m.find(dim)] else: 0
   grid.base.put(adjustedIndices, value)
 
 proc view*[G, m](grid: Boxed[G, m], slices: array): auto =
   ## [doc]
   var adjustedSlices {.noInit.}: array[grid.base.nDim, StridedSlice[int]]
   forStatic dim, 0 .. <adjustedSlices.len:
-    adjustedSlices[dim] = when m[dim] >= 0: slices[m[dim]] else: (0 .. 0).by(1)
+    adjustedSlices[dim] = when dim in m: slices[m.find(dim)] else: (0..0).by(1)
   grid.base.view(adjustedSlices)
 
 proc box*[G, m](grid: Boxed[G, m], dim: static[int]): auto =
   ## [doc]
-  const m1 = m[0 .. <dim] & m[dim + 1 .. grid.base.nDim]
+  const m1 = m[0 .. <dim] & @[-1] & m[dim .. <m.len]
   Boxed[G, m1](base: grid.base)
 
 proc unbox*[G, m](grid: Boxed[G, m], dim: static[int]): auto =
   ## [doc]
-  const m1 = m[0 .. <dim] & [-1] & m[dim + 1 .. <grid.base.nDim]
+  const m1 = m[0 .. <dim] & m[dim + 1 .. <m.len]
   Boxed[G, m1](base: grid.base)
 
 #===============================================================================
