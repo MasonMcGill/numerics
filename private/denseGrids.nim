@@ -120,6 +120,7 @@ proc put*[n, E](grid: DenseGrid[n, E], indices: array, element: E) =
   data[] = element
 
 proc view*[n, E](grid: DenseGrid[n, E], slices: array): DenseGrid[n, E] =
+  ## [doc]
   result.data = grid.data
   forStatic dim, 0 .. <n:
     assert slices[dim].first <= slices[dim].last + 1

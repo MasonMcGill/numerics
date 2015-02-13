@@ -76,12 +76,16 @@ proc toSeq(slice: Slice[int]): seq[int] =
 #===============================================================================
 # Index Parsing/Packaging
 
-# proc pack(args: PNimrodNode): PNimrodNode {.compileTime.} =
-#   result = newNimNode nnkPar
-#   for i in 0 .. <args.len:
-#     result.add(newNimNode(nnkExprColonExpr).add(
-#       ident("field" & $i), args[i]))
-#
+proc pack(args: PNimrodNode): PNimrodNode {.compileTime.} =
+  result = newNimNode nnkPar
+  for i in 0 .. <args.len:
+    result.add(newNimNode(nnkExprColonExpr).add(
+      ident("field" & $i), args[i]))
+
+template len*(tup: tuple): int =
+  template getLen(i: static[int]): int {.genSym.} =
+    when compiles(tup[i]): getLen(i + 1) else: i
+  getLen 0
 # proc nSlices(Tup: typedesc[tuple]): int =
 #   var t: Tup
 #   const tLen = t.len

@@ -111,7 +111,7 @@ test "outputGrid.view(slices)":
     assert "[2, 0]: 6" in grid0.record[]
     assert "[2, 2]: 7" in grid0.record[]
 
-test "grid.view(slices)":
+test "gridView.view(slices)":
   let grid0 = newTestInputGrid2D(3, 4).view([(1..2).by(1), (0..3).by(1)])
   let grid1 = grid0.view([(0..1).by(1), (1..3).by(2)])
   assert grid1.size == [2, 2]
@@ -120,13 +120,13 @@ test "grid.view(slices)":
   assert grid1.get([1, 0]) == ["2", "1"]
   assert grid1.get([1, 1]) == ["2", "3"]
 
-test "grid.box(dim)":
+test "gridView.box(dim)":
   proc box(grid: TestInputGrid2D, dim: int): auto = newDenseGrid(int, 3, 1, 4)
   let grid0 = newTestInputGrid2D(3, 4).view([(1..2).by(1), (0..3).by(1)])
   let grid1 = grid0.box(1)
   assert grid1.size == [2, 1, 4]
 
-test "grid.unbox(dim)":
+test "gridView.unbox(dim)":
   proc unbox(grid: TestInputGrid2D, dim: int): auto = newDenseGrid(int, 3)
   let grid0 = newTestInputGrid2D(3, 4).view([(1..2).by(1), (0..3).by(1)])
   let grid1 = grid0.unbox(1)
