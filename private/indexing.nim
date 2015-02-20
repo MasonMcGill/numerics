@@ -21,15 +21,15 @@ proc describeIndices(Indices: typedesc[tuple]): seq[string] {.compileTime.} =
   var indices: Indices
   forStatic dim, 0 .. <indices.len:
     if indices[dim] is int:
-      result &= "int"
+      result.add "int"
     elif indices[dim] is Slice:
-      result &= "Slice"
+      result.add "Slice"
     elif indices[dim] is StridedSlice:
-      result &= "StridedSlice"
+      result.add "StridedSlice"
     elif indices[dim] is FullSlice:
-      result &= "FullSlice"
+      result.add "FullSlice"
     elif indices[dim] is NewDim:
-      result &= "NewDim"
+      result.add "NewDim"
 
 proc expandedFullSliceExpr(gridExpr: PNimrodNode, dim: int):
                            PNimrodNode {.compileTime.} =
@@ -40,7 +40,8 @@ proc subgridExpr(gridExpr, indicesExpr: PNimrodNode,
                  nDim: int, indexTypes: seq[string]):
                  PNimrodNode {.compileTime.} =
   result = gridExpr
-  if "int" in indexTypes or "StridedSlice" in indexTypes:
+  if "int" in indexTypes or "Slice" in indexTypes or
+     "StridedSlice" in indexTypes:
     let slicesExpr = newBracket()
     for indexType in indexTypes:
       let indexExpr = newBracketExpr(indicesExpr, newLit(slicesExpr.len))
@@ -65,7 +66,10 @@ proc subgridExpr(gridExpr, indicesExpr: PNimrodNode,
 proc `[]`*(grid: InputGrid|OutputGrid, indices: tuple): auto =
   ## [doc]:
   when indices.areAllInts and indices.len == grid.nDim:
-    grid.get(indices)
+    var indicesArray {.noInit.}: array[indices.len, int]
+    forStatic i, 0 .. <indices.len:
+      indicesArray[i] = indices[i]
+    grid.get(indicesArray)
   else:
     type Indices = type(indices)
     const indicesDesc = describeIndices(Indices)
@@ -107,16 +111,16 @@ test "inputGrid[]":
   assert grid.get([1, 0]) == ["1", "0"]
   assert grid.get([1, 1]) == ["1", "1"]
 
-# test "inputGrid[index0]":
-#   block:
-#     let grid = newTestInputGrid2D(3, 2)[2]
-#     assert grid.size == [4]
-#     assert grid[0] == ["2", "0"]
-#     assert grid[1] == ["2", "1"]
-#   block:
-#     let grid = newTestInputGrid2D(3, 2)[1..0]
-#     assert grid.size == [0, 2]
-#
+test "inputGrid[index0]":
+  block:
+    let grid = newTestInputGrid2D(3, 2)[2]
+    assert grid.size == [2]
+    assert grid.get([0]) == ["2", "0"]
+    assert grid.get([1]) == ["2", "1"]
+  block:
+    let grid = newTestInputGrid2D(3, 2)[1..0]
+    assert grid.size == [0, 2]
+
 # test "grid[index0, index1]":
 #   type CustomGrid = object
 #     typeClassTag_InputGrid: type(())

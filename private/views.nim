@@ -52,26 +52,6 @@ proc view*[G](grid: View[G], slices: array): auto =
     result.slices[dim].last = slice0.first + slice1.last * slice0.stride
     result.slices[dim].stride = slice0.stride * slice1.stride
 
-proc box*[G](grid: View[G], dim: static[int]): auto =
-  ## [doc]
-  static: assert dim >= 0 and dim < grid.base.nDim
-  static: assert grid.base.nDim < maxNDim
-  const gridNDim = grid.base.nDim
-  let boxedBase = grid.base.box(dim)
-  result = View[type(boxedBase)](base: boxedBase)
-  result.slices[0 .. <dim] = grid.slices[0 .. <dim]
-  result.slices[dim] = (0..0).by(1)
-  result.slices[dim + 1 .. gridNDim] = grid.slices[dim .. <gridNDim]
-
-proc unbox*[G](grid: View[G], dim: static[int]): auto =
-  ## [doc]
-  static: assert dim >= 0 and dim < grid.base.nDim
-  const gridNDim = grid.base.nDim
-  let unboxedBase = grid.base.unbox(dim)
-  result = View[type(unboxedBase)](base: unboxedBase)
-  result.slices[0 .. <dim] = grid.slices[0 .. <dim]
-  result.slices[dim .. <gridNDim - 1] = grid.slices[dim + 1 .. <gridNDim]
-
 #===============================================================================
 # Tests
 
@@ -119,17 +99,3 @@ test "gridView.view(slices)":
   assert grid1.get([0, 1]) == ["1", "3"]
   assert grid1.get([1, 0]) == ["2", "1"]
   assert grid1.get([1, 1]) == ["2", "3"]
-
-test "gridView.box(dim)":
-  proc box(grid: TestInputGrid2D, dim: static[int]): auto =
-    newDenseGrid(int, 3, 1, 4)
-  let grid0 = newTestInputGrid2D(3, 4).view([(1..2).by(1), (0..3).by(1)])
-  let grid1 = grid0.box(1)
-  assert grid1.size == [2, 1, 4]
-
-test "gridView.unbox(dim)":
-  proc unbox(grid: TestInputGrid2D, dim: static[int]): auto =
-    newDenseGrid(int, 3)
-  let grid0 = newTestInputGrid2D(3, 4).view([(1..2).by(1), (0..3).by(1)])
-  let grid1 = grid0.unbox(1)
-  assert grid1.size == [2]
