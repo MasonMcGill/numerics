@@ -129,6 +129,33 @@ proc view*[n, E](grid: DenseGrid[n, E], slices: array): DenseGrid[n, E] =
     result.strides[dim] = slices[dim].stride * grid.strides[dim]
     result.data += slices[dim].first * grid.strides[dim]
 
+proc box*[n, E](grid: DenseGrid[n, E], dim: static[int]): auto =
+  ## [doc]
+  static: assert dim >= 0 and dim <= n
+  var result {.noInit.}: DenseGrid[n + 1, E]
+  result.size[dim] = 1
+  result.size[0 .. <dim] = grid.size[0 .. <dim]
+  result.size[dim + 1 .. <n + 1] = grid.size[dim .. <n]
+  result.strides[dim] = 0
+  result.strides[0 .. <dim] = grid.strides[0 .. <dim]
+  result.strides[dim + 1 .. <n + 1] = grid.strides[dim .. <n]
+  result.buffer.shallowCopy grid.buffer
+  result.data = grid.data
+  result
+
+proc unbox*[n, E](grid: DenseGrid[n, E], dim: static[int]): auto =
+  ## [doc]
+  static: assert n > 0
+  static: assert dim >= 0 and dim < n
+  var result {.noInit.}: DenseGrid[n - 1, E]
+  result.size[0 .. <dim] = grid.size[0 .. <dim]
+  result.size[dim .. <n - 1] = grid.size[dim + 1 .. <n]
+  result.strides[0 .. <dim] = grid.strides[0 .. <dim]
+  result.strides[dim .. <n - 1] = grid.strides[dim + 1 .. <n]
+  result.buffer.shallowCopy grid.buffer
+  result.data = grid.data
+  result
+
 #===============================================================================
 # Tests
 
@@ -271,3 +298,31 @@ test "denseGrid.view(indices)":
     assert grid1.data != nil
     assert grid1.get([0, 0]) == "3"
     assert grid1.get([1, 0]) == "5"
+
+test "denseGrid.box(dim)":
+  block:
+    let grid0 = newDenseGrid(int)
+    let grid1 = grid0.box(0)
+    assert grid1.size == [1]
+    assert grid1.strides == [0]
+    assert grid1.data == grid0.data
+  block:
+    let grid0 = newDenseGrid(int, 3, 2)
+    let grid1 = grid0.box(1)
+    assert grid1.size == [3, 1, 2]
+    assert grid1.strides == [2, 0, 1]
+    assert grid1.data == grid0.data
+
+test "denseGrid.unbox(dim)":
+  block:
+    let grid0 = newDenseGrid(int, 3)
+    let grid1 = grid0.unbox(0)
+    assert grid1.size == emptyIntArray
+    assert grid1.strides == emptyIntArray
+    assert grid1.data == grid0.data
+  block:
+    let grid0 = newDenseGrid(int, 3, 2)
+    let grid1 = grid0.unbox(1)
+    assert grid1.size == [3]
+    assert grid1.strides == [2]
+    assert grid1.data == grid0.data

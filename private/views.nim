@@ -121,13 +121,15 @@ test "gridView.view(slices)":
   assert grid1.get([1, 1]) == ["2", "3"]
 
 test "gridView.box(dim)":
-  proc box(grid: TestInputGrid2D, dim: int): auto = newDenseGrid(int, 3, 1, 4)
+  proc box(grid: TestInputGrid2D, dim: static[int]): auto =
+    newDenseGrid(int, 3, 1, 4)
   let grid0 = newTestInputGrid2D(3, 4).view([(1..2).by(1), (0..3).by(1)])
   let grid1 = grid0.box(1)
   assert grid1.size == [2, 1, 4]
 
 test "gridView.unbox(dim)":
-  proc unbox(grid: TestInputGrid2D, dim: int): auto = newDenseGrid(int, 3)
+  proc unbox(grid: TestInputGrid2D, dim: static[int]): auto =
+    newDenseGrid(int, 3)
   let grid0 = newTestInputGrid2D(3, 4).view([(1..2).by(1), (0..3).by(1)])
   let grid1 = grid0.unbox(1)
   assert grid1.size == [2]
