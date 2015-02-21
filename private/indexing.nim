@@ -83,8 +83,11 @@ macro `[]`*(grid: InputGrid|OutputGrid, indices: varargs[expr]): expr =
 
 proc `[]=`*(grid: OutputGrid, indices: tuple, value: any) =
   ## [doc]
-  when indices.areAllInts == indices.len:
-    grid.put(indices, value)
+  when indices.areAllInts and indices.len == grid.nDim:
+    var indicesArray {.noInit.}: array[indices.len, int]
+    forStatic i, 0 .. <indices.len:
+      indicesArray[i] = indices[i]
+    grid.put(indicesArray, value)
   else:
     let gridView = grid[indices]
     for i in gridView.indices:
@@ -121,136 +124,101 @@ test "inputGrid[index0]":
     let grid = newTestInputGrid2D(3, 2)[1..0]
     assert grid.size == [0, 2]
 
-# test "grid[index0, index1]":
-#   type CustomGrid = object
-#     typeClassTag_InputGrid: type(())
-#   proc size(grid: CustomGrid): auto =
-#     (3, 4)
-#   proc get(grid: CustomGrid, indices: tuple): auto =
-#     ($indices[0], $indices[1])
-#   block:
-#     let element = CustomGrid()[2, 0]
-#     assert element == ("2", "0")
-#   block:
-#     let view = CustomGrid()[1..2, 2]
-#     assert view.size == (field0: 2)
-#     assert view[0] == ("1", "2")
-#     assert view[1] == ("2", "2")
-#   block:
-#     let view = CustomGrid()[0..2, 1..2]
-#     assert view.size == (3, 2)
-#     assert view[0, 0] == ("0", "1")
-#     assert view[0, 1] == ("0", "2")
-#     assert view[1, 0] == ("1", "1")
-#     assert view[1, 1] == ("1", "2")
-#     assert view[2, 0] == ("2", "1")
-#     assert view[2, 1] == ("2", "2")
-#
-# test "grid[index0, index1, index2]":
-#   type CustomGrid = object
-#     typeClassTag_InputGrid: type(())
-#   proc size(grid: CustomGrid): auto =
-#     (2, 1, 1)
-#   proc get(grid: CustomGrid, indices: tuple): auto =
-#     ($indices[0], $indices[1], $indices[2])
-#   block:
-#     let element = CustomGrid()[1, 0, 0]
-#     assert element == ("1", "0", "0")
-#   block:
-#     let view = CustomGrid()[1, 0, 0..0]
-#     assert view.size == (field0: 1)
-#     assert view[0] == ("1", "0", "0")
-#   block:
-#     let view = CustomGrid()[0..1, 0, 0]
-#     assert view.size == (field0: 2)
-#     assert view[0] == ("0", "0", "0")
-#     assert view[1] == ("1", "0", "0")
-#   block:
-#     let view = CustomGrid()[1..1, 0..(-1), 0]
-#     assert view.size == (1, 0)
-#   block:
-#     let view = CustomGrid()[0..1, 0..0, 0..0]
-#     assert view.size == (2, 1, 1)
-#     assert view[0, 0, 0] == ("0", "0", "0")
-#     assert view[1, 0, 0] == ("1", "0", "0")
-#
-# test "grid[index0][index1, index2]":
-#   type CustomGrid = object
-#     typeClassTag_InputGrid: type(())
-#   proc size(grid: CustomGrid): auto =
-#     (2, 1, 1)
-#   proc get(grid: CustomGrid, indices: tuple): auto =
-#     ($indices[0], $indices[1], $indices[2])
-#   block:
-#     let element = CustomGrid()[1][0, 0]
-#     assert element == ("1", "0", "0")
-#   block:
-#     let view = CustomGrid()[1][0, 0..0]
-#     assert view.size == (field0: 1)
-#     assert view[0] == ("1", "0", "0")
-#
-# test "grid[index0][index1, index2, index3]":
-#   type CustomGrid = object
-#     typeClassTag_InputGrid: type(())
-#   proc size(grid: CustomGrid): auto =
-#     (2, 1, 1)
-#   proc get(grid: CustomGrid, indices: tuple): auto =
-#     ($indices[0], $indices[1], $indices[2])
-#   block:
-#     let view = CustomGrid()[0..1][0..1, 0, 0]
-#     assert view.size == (field0: 2)
-#     assert view[0] == ("0", "0", "0")
-#     assert view[1] == ("1", "0", "0")
-#   block:
-#     let view = CustomGrid()[1..1][0..0, 0..(-1), 0]
-#     assert view.size == (1, 0)
-#   block:
-#     let view = CustomGrid()[0..1][0..1, 0..0, 0..0]
-#     assert view.size == (2, 1, 1)
-#     assert view[0, 0, 0] == ("0", "0", "0")
-#     assert view[1, 0, 0] == ("1", "0", "0")
-#
-# test "grid[indices]":
-#   type CustomGrid = object
-#     typeClassTag_InputGrid: type(())
-#   proc size(grid: CustomGrid): auto =
-#     (3, 4)
-#   proc get(grid: CustomGrid, indices: tuple): auto =
-#     ($indices[0], $indices[1])
-#   block:
-#     let element = CustomGrid()[(2, 0)]
-#     assert element == ("2", "0")
-#   block:
-#     let view = CustomGrid()[(1..2, 2)]
-#     assert view.size == (field0: 2)
-#     assert view[(field0: 0)] == ("1", "2")
-#     assert view[(field0: 1)] == ("2", "2")
-#   block:
-#     let view = CustomGrid()[0..2, 1..2]
-#     assert view.size == (3, 2)
-#     assert view[(0, 0)] == ("0", "1")
-#     assert view[(0, 1)] == ("0", "2")
-#     assert view[(1, 0)] == ("1", "1")
-#     assert view[(1, 1)] == ("1", "2")
-#     assert view[(2, 0)] == ("2", "1")
-#     assert view[(2, 1)] == ("2", "2")
-#
-# test "grid[] = value":
-#   type CustomGrid = object
-#     record: ref seq[string]
-#     typeClassTag_OutputGrid: type(())
-#   proc size(grid: CustomGrid): auto =
-#     (3, 4)
-#   proc put(grid: CustomGrid, indices: tuple, value: int) =
-#     grid.record[].add("(" & $indices[0] & ", " & $indices[1] & "): " & $value)
-#   block:
-#     let grid = CustomGrid(record: new(seq[string]))
-#     grid.record[] = newSeq[string]()
-#     grid[] = 5
-#     assert "(0, 0): 5" in grid.record[]
-#     assert "(1, 1): 5" in grid.record[]
-#     assert "(2, 3): 5" in grid.record[]
-#
+test "grid[index0, index1]":
+  block:
+    let element = newTestInputGrid2D(3, 4)[2, 0]
+    assert element == ["2", "0"]
+  block:
+    let view = newTestInputGrid2D(3, 4)[1..2, 2]
+    assert view.size == [2]
+    assert view.get([0]) == ["1", "2"]
+    assert view.get([1]) == ["2", "2"]
+  block:
+    let view = newTestInputGrid2D(3, 4)[0..2, 1..2]
+    assert view.size == [3, 2]
+    assert view.get([0, 0]) == ["0", "1"]
+    assert view.get([0, 1]) == ["0", "2"]
+    assert view.get([1, 0]) == ["1", "1"]
+    assert view.get([1, 1]) == ["1", "2"]
+    assert view.get([2, 0]) == ["2", "1"]
+    assert view.get([2, 1]) == ["2", "2"]
+
+test "grid[index0, index1, index2]":
+  block:
+    let element = newTestInputGrid3D(2, 1, 1)[1, 0, 0]
+    assert element == ["1", "0", "0"]
+  block:
+    let view = newTestInputGrid3D(2, 1, 1)[1, 0, 0..0]
+    assert view.size == [1]
+    assert view.get([0]) == ["1", "0", "0"]
+  block:
+    let view = newTestInputGrid3D(2, 1, 1)[0..1, 0, 0]
+    assert view.size == [2]
+    assert view.get([0]) == ["0", "0", "0"]
+    assert view.get([1]) == ["1", "0", "0"]
+  block:
+    let view = newTestInputGrid3D(2, 1, 1)[1..1, 0..(-1), 0]
+    assert view.size == [1, 0]
+  block:
+    let view = newTestInputGrid3D(2, 1, 1)[0..1, 0..0, 0..0]
+    assert view.size == [2, 1, 1]
+    assert view.get([0, 0, 0]) == ["0", "0", "0"]
+    assert view.get([1, 0, 0]) == ["1", "0", "0"]
+
+test "grid[index0][index1, index2]":
+  block:
+    let element = newTestInputGrid3D(2, 1, 1)[1][0, 0]
+    assert element == ["1", "0", "0"]
+  block:
+    let view = newTestInputGrid3D(2, 1, 1)[1][0, 0..0]
+    assert view.size == [1]
+    assert view.get([0]) == ["1", "0", "0"]
+
+test "grid[index0][index1, index2, index3]":
+  block:
+    let view = newTestInputGrid3D(2, 1, 1)[0..1][0..1, 0, 0]
+    assert view.size == [2]
+    assert view.get([0]) == ["0", "0", "0"]
+    assert view.get([1]) == ["1", "0", "0"]
+  block:
+    let view = newTestInputGrid3D(2, 1, 1)[1..1][0..0, 0..(-1), 0]
+    assert view.size == [1, 0]
+  block:
+    let view = newTestInputGrid3D(2, 1, 1)[0..1][0..1, 0..0, 0..0]
+    assert view.size == [2, 1, 1]
+    assert view.get([0, 0, 0]) == ["0", "0", "0"]
+    assert view.get([1, 0, 0]) == ["1", "0", "0"]
+
+test "grid[indices]":
+  block:
+    let element = newTestInputGrid2D(3, 4)[(2, 0)]
+    assert element == ["2", "0"]
+  block:
+    let view = newTestInputGrid2D(3, 4)[(1..2, 2)]
+    assert view.size == [2]
+    assert view.get([(field0: 0)]) == ["1", "2"]
+    assert view.get([(field0: 1)]) == ["2", "2"]
+  block:
+    let view = newTestInputGrid2D(3, 4)[0..2, 1..2]
+    assert view.size == [3, 2]
+    assert view.get([(0, 0)]) == ["0", "1"]
+    assert view.get([(0, 1)]) == ["0", "2"]
+    assert view.get([(1, 0)]) == ["1", "1"]
+    assert view.get([(1, 1)]) == ["1", "2"]
+    assert view.get([(2, 0)]) == ["2", "1"]
+    assert view.get([(2, 1)]) == ["2", "2"]
+
+test "grid[] = value":
+    let grid = newTestOutputGrid2D(3, 2)
+    grid[] = 5
+    assert grid.record[].len == 6
+    assert "[0, 0]: 5" in grid.record[]
+    assert "[0, 1]: 5" in grid.record[]
+    assert "[1, 0]: 5" in grid.record[]
+    assert "[1, 1]: 5" in grid.record[]
+    assert "[2, 0]: 5" in grid.record[]
+    assert "[2, 1]: 5" in grid.record[]
+
 # test "grid[index0] = value":
 #   type CustomGrid = object
 #     record: ref seq[string]

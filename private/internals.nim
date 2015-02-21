@@ -153,6 +153,16 @@ proc newTestInputGrid2D(size0, size1: int): TestInputGrid2D =
 proc get(grid: TestInputGrid2D, indices: array[2, int]): array[2, string] =
   [$indices[0], $indices[1]]
 
+type TestInputGrid3D = object
+  size: array[3, int]
+  typeClassTag_InputGrid: byte
+
+proc newTestInputGrid3D(size0, size1, size2: int): TestInputGrid3D =
+  TestInputGrid3D(size: [size0, size1, size2])
+
+proc get(grid: TestInputGrid3D, indices: array[3, int]): array[3, string] =
+  [$indices[0], $indices[1], $indices[2]]
+
 type TestOutputGrid2D = object
   size: array[2, int]
   record: ref seq[string]
