@@ -151,7 +151,7 @@ proc newTestInputGrid2D(size0, size1: int): TestInputGrid2D =
   TestInputGrid2D(size: [size0, size1])
 
 proc get(grid: TestInputGrid2D, indices: array[2, int]): string =
-  $indices[0] & "," & $indices[1]]
+  $indices[0] & "," & $indices[1]
 
 type TestInputGrid3D = object
   size: array[3, int]
@@ -186,6 +186,6 @@ proc newTestOutputGrid3D(size0, size1, size2: int): TestOutputGrid3D =
   result.record = new(seq[string])
   result.record[] = newSeq[string]()
 
-proc put(grid: TestOutputGrid2D, indices: array[3, int], value: int) =
+proc put(grid: TestOutputGrid3D, indices: array[3, int], value: int) =
   grid.record[].add($indices[0] & "," & $indices[1] & "," & $indices[2] &
                     " -> " & $value)

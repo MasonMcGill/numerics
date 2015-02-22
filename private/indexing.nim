@@ -92,7 +92,9 @@ proc `[]=`*(grid: OutputGrid, indices: tuple, value: any) =
     let gridView = grid[indices]
     for i in gridView.indices:
       when value is InputGrid:
-        gridView.put(i, value.get(i[0 .. <value.nDim]))
+        var subindices {.noInit.}: array[value.nDim, int]
+        subindices[0 .. <subindices.len] = i[0 .. <subindices.len]
+        gridView.put(i, value.get(subindices))
       else:
         gridView.put(i, value)
 
@@ -222,9 +224,10 @@ test "grid[] = value":
 test "grid[index0] = value":
   let grid = newTestOutputGrid2D(3, 4)
   grid[2] = 5
-  assert grid.record[].len == 3
+  assert grid.record[].len == 4
   assert "2,0 -> 5" in grid.record[]
   assert "2,1 -> 5" in grid.record[]
+  assert "2,2 -> 5" in grid.record[]
   assert "2,3 -> 5" in grid.record[]
 
 test "grid[index0, index1] = value":
@@ -243,7 +246,7 @@ test "grid[index0, index1, index2] = value":
 test "grid[indices] = value":
   let grid = newTestOutputGrid2D(3, 4)
   grid[(1..2, 0..2)] = @@[5, 6]
-  assert grid.record.len == 6
+  assert grid.record[].len == 6
   assert "1,0 -> 5" in grid.record[]
   assert "2,0 -> 6" in grid.record[]
   assert "1,1 -> 5" in grid.record[]
