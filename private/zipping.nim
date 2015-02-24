@@ -4,24 +4,12 @@
 type Zipped*[Inputs: tuple] = object
   ## [doc]
   inputs: Inputs
-  sizeArray: array[8, int]
-  stridesArray: array[3, array[8, int]]
-  typeClassTag_InputGrid: type(())
+  size: array[maxNDim, int]
+  strides: array[maxNZippedGrids, array[maxNDim, int]]
+  typeClassTag_InputGrid: byte
 
 proc zip(inputs: tuple): auto =
   result = Zipped[type(inputs)](inputs: inputs)
-  template getNDim(i: int): expr =
-    when compiles(result.inputs[i]):
-      max(result.inputs[i].nDim, getNDim(i + 1))
-    else:
-      0
-  echo getNDim(0)
-  # macro initResult: stmt =
-  #   result = newStmtList()
-  #   # forStatic i in 0 .. <
-  #   for i in 0 .. 3:
-  #     echo compiles(inputs[i])
-  # initResult()
 
 proc zip*(input0: InputGrid0): auto =
   ## [doc]
@@ -29,33 +17,26 @@ proc zip*(input0: InputGrid0): auto =
 
 proc zip*(input0: InputGrid0, input1: InputGrid1): auto =
   ## [doc]
-  zip((field0: input0, field1: input1))
+  zip((input0, input1))
 
 proc zip*(input0: InputGrid0, input1: InputGrid1, input2: InputGrid2): auto =
   ## [doc]
-  zip((field0: input0, field1: input1, field2: input2))
+  zip((input0, input1, input2))
 
 proc zip*(input0: InputGrid0, input1: InputGrid1,
           input2: InputGrid2, input3: InputGrid3): auto =
   ## [doc]
-  zip((field0: input0, field1: input1, field2: input2, field3: input3))
+  zip((input0, input1, input2, input3))
 
 proc size*[Inputs](grid: Zipped[Inputs]): auto =
   ## [doc]
-  template getNDim(i: int): expr =
-    when compiles(grid.inputs[i]):
-      max(grid.inputs[i].nDim, getNDim(i + 1))
-    else:
-      0
-  macro buildResult: expr =
-    result = newNimNode(nnkPar)
-    for i in 0 .. <getNDim(0):
-      result.add(newNimNode(nnkExprColonExpr).add(
-        ident("field" & $i),
-        newNimNode(nnkBracketExpr).add(
-          newDotExpr(ident"grid", ident"sizeArray"),
-          newLit(i))))
-  buildResult()
+  proc maxNDim: int =
+    result = 0
+    forStatic i, 0 .. <grid.inputs.len:
+      result = max(result, grid.inputs[i].nDim)
+  var result {.noInit.}: array[maxNDim(), int]
+  result[0 .. result.high] = grid.size[0 .. result.high]
+  result
 
 proc get*[Inputs](grid: Zipped[Inputs], indices: tuple): auto =
   ## [doc]
@@ -140,7 +121,7 @@ proc get*[Inputs](grid: Zipped[Inputs], indices: tuple): auto =
 # test "zip(grid0)":
 #   assert zip(@@[0, 1]).collect == @@[(field0: 0), (field0: 1)]
 #   assert zip(@@[[0], [1]]).collect == @@[[(field0: 0)], [(field0: 1)]]
-# 
+#
 # test "zip(grid0, grid1)":
 #   assert zip(@@[0, 1], @@[2, 3]).collect == @@[(0, 2), (1, 3)]
 #   assert zip(@@[[0], [1]], @@[[2], [3]]).collect == @@[[(0, 2)], [(1, 3)]]
