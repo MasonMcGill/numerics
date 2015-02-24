@@ -66,18 +66,21 @@ template Element*(grid: InputGrid): typedesc =
   type(grid.get(grid.Indices.new[]))
 
 proc yieldIndicesStmt(nDim: int): PNimrodNode {.compileTime.} =
-  let indicesExpr = newBracket()
-  for dim in 0 .. <nDim:
-    indicesExpr.add(ident("i" & $dim))
-  result = newYieldStmt(indicesExpr)
-  for dim in countDown(<nDim, 0):
-    let lenExpr = newBracketExpr(
-      newDotExpr(ident"grid", ident"size"),
-      newLit(dim))
-    result = newForStmt(
-      ident("i" & $dim),
-      newCall("..", newLit(0), newCall("<", lenExpr)),
-      result)
+  if nDim == 0:
+    result = newYieldStmt(ident"emptyIntArray")
+  else:
+    let indicesExpr = newBracket()
+    for dim in 0 .. <nDim:
+      indicesExpr.add(ident("i" & $dim))
+    result = newYieldStmt(indicesExpr)
+    for dim in countDown(<nDim, 0):
+      let lenExpr = newBracketExpr(
+        newDotExpr(ident"grid", ident"size"),
+        newLit(dim))
+      result = newForStmt(
+        ident("i" & $dim),
+        newCall("..", newLit(0), newCall("<", lenExpr)),
+        result)
 
 iterator indices*(grid: InputGrid|OutputGrid): auto =
   ## [doc]
