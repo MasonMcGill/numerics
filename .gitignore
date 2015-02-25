@@ -1,4 +1,3 @@
-nimcache/
-numerics
-*.html
-*.exe
+/binary
+**/nimcache
+**/.DS_Store

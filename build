@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+'''
+Compile, test, and/or benchmark the Nim numerics module.
+'''
+from argparse import ArgumentParser
+from os import listdir, makedirs
+from os.path import abspath, dirname, exists, join
+from subprocess import call
+
+def run(target):
+    here = dirname(abspath(__file__))
+    source_path = join(here, 'source')
+    binary_path = join(here, 'binary', target[:-4])
+    target_path = join(here, target)
+    if not exists(dirname(binary_path)):
+        makedirs(dirname(binary_path))
+    call(['nim', 'c', '--run', '--verbosity:0',
+          '--path:' + source_path,
+          '--out:' + binary_path,
+          target_path])
+
+parser = ArgumentParser(description=__doc__)
+parser.add_argument('command', help='"compile", "test-*", or "benchmark-*"')
+command = parser.parse_args().command
+
+if command == 'compile':
+    run('source/numerics.nim')
+elif command == 'test-all':
+    for test in listdir('tests'):
+        if test != 'testing.nim':
+            run('tests/' + test)
+elif command.startswith('test-'):
+    run('tests/' + command[5:] + '.nim')
+elif command == 'benchmark-all':
+    print('Benchmarking is not yet implemented.')
+elif command.startswith('benchmark-'):
+    print('Benchmarking is not yet implemented.')
+else:
+    parser.print_help()
