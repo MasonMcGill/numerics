@@ -1,59 +1,54 @@
 import macros
+import strutils
 import numericsInternals
 
 type InputGrid* = generic X
   ## [doc]
   var x: X; compiles(x.typeClassTag_InputGrid)
 
+type InputGrid0* = InputGrid
+type InputGrid1* = InputGrid
+type InputGrid2* = InputGrid
+type InputGrid3* = InputGrid
+
 type OutputGrid* = generic X
   ## [doc]
   var x: X; compiles(x.typeClassTag_OutputGrid)
 
-type InputGrid0* = generic X
-  ## [doc]
-  X is InputGrid
+type OutputGrid0* = OutputGrid
+type OutputGrid1* = OutputGrid
+type OutputGrid2* = OutputGrid
+type OutputGrid3* = OutputGrid
 
-type InputGrid1* = generic X
+type StatefulGrid* = InputGrid and OutputGrid
   ## [doc]
-  X is InputGrid
 
-type InputGrid2* = generic X
+type StatefulGrid0* = StatefulGrid
+type StatefulGrid1* = StatefulGrid
+type StatefulGrid2* = StatefulGrid
+type StatefulGrid3* = StatefulGrid
+
+type SomeGrid* = InputGrid or OutputGrid
   ## [doc]
-  X is InputGrid
 
-type InputGrid3* = generic X
-  ## [doc]
-  X is InputGrid
+type SomeGrid0* = SomeGrid
+type SomeGrid1* = SomeGrid
+type SomeGrid2* = SomeGrid
+type SomeGrid3* = SomeGrid
 
-type OutputGrid0* = generic X
-  ## [doc]
-  X is OutputGrid
-
-type OutputGrid1* = generic X
-  ## [doc]
-  X is OutputGrid
-
-type OutputGrid2* = generic X
-  ## [doc]
-  X is OutputGrid
-
-type OutputGrid3* = generic X
-  ## [doc]
-  X is OutputGrid
-
-template nDim*(Grid: typedesc[InputGrid|OutputGrid]): int =
+template nDim*(Grid: typedesc[SomeGrid]): int =
   ## [doc]
   Grid.new[].size.len
 
-template nDim*(grid: InputGrid|OutputGrid): int =
+template nDim*(grid: SomeGrid): int =
   ## [doc]
   grid.size.len
 
-template Indices*(Grid: typedesc[InputGrid|OutputGrid]): typedesc =
+template Indices*(Grid: typedesc[SomeGrid]): typedesc =
   ## [doc]
   type(Grid.new[].size)
 
-template Indices*(grid: InputGrid|OutputGrid): typedesc =
+template Indices*(grid: SomeGrid): typedesc =
   ## [doc]
   type(grid.size)
 
@@ -67,7 +62,7 @@ template Element*(grid: InputGrid): typedesc =
 
 proc yieldIndicesStmt(nDim: int): PNimrodNode {.compileTime.} =
   if nDim == 0:
-    result = newYieldStmt(ident"emptyIntArray")
+    result = newYieldStmt(bindSym"emptyIntArray")
   else:
     let indicesExpr = newBracket()
     for dim in 0 .. <nDim:
@@ -82,7 +77,7 @@ proc yieldIndicesStmt(nDim: int): PNimrodNode {.compileTime.} =
         newCall("..", newLit(0), newCall("<", lenExpr)),
         result)
 
-iterator indices*(grid: InputGrid|OutputGrid): auto =
+iterator indices*(grid: SomeGrid): auto =
   ## [doc]
   macro buildAction: stmt =
     yieldIndicesStmt(grid.nDim)
@@ -100,29 +95,27 @@ iterator pairs*(grid: InputGrid): auto =
 
 proc `==`*(grid0: InputGrid0, grid1: InputGrid1): bool =
   ## [doc]
-  assert grid0.size == grid1.size
+  if grid0.size != grid1.size:
+    return false
   for i in grid0.indices:
-    when compiles(system.`==`(grid0.get(i), grid1.get(i))):
-      if not (system.`==`(grid0.get(i), grid1.get(i))):
-        return false
-    else:
-      if grid0.get(i) != grid1.get(i):
-        return false
+    if grid0.get(i) != grid1.get(i):
+      return false
   return true
+
+proc describeGrid[R](grid: InputGrid, indices: array[R, int]): string =
+  when indices.len == grid.nDim:
+    result = $(grid.get(indices))
+  else:
+    const delim = "," & repeatStr(grid.nDim - indices.len - 1, "\n") & " "
+    result = "["
+    for i in 0 .. <grid.size[indices.len]:
+      var augIndices: array[indices.len + 1, int]
+      augIndices[0 .. <indices.len] = indices
+      augIndices[indices.len] = i
+      if i > 0: result &= delim
+      result &= describeGrid(grid, augIndices).replace("\n", "\n ")
+    result &= "]"
 
 proc `$`*(grid: InputGrid): string =
   ## [doc]
-  proc describeGrid[R](indices: array[R, int]): string =
-    when indices.len == grid.nDim:
-      result = $(grid.get(indices))
-    else:
-      const delim = "," & repeatStr(grid.nDim - indices.len - 1, "\n") & " "
-      result = "["
-      for i in 0 .. <grid.size[indices.len]:
-        var augIndices: array[indices.len + 1, int]
-        augIndices[0 .. <indices.len] = indices
-        augIndices[indices.len] = i
-        if i > 0: result &= delim
-        result &= describeGrid(augIndices).replace("\n", "\n ")
-      result &= "]"
-  describeGrid(emptyIntArray)
+  describeGrid(grid, emptyIntArray)

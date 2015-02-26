@@ -1,4 +1,3 @@
-import numerics
 
 template test(name: expr, action: stmt): stmt {.immediate.} =
   when isMainModule and not defined(release):

@@ -32,21 +32,20 @@ proc newYieldStmt*(args: varargs[PNimrodNode]): PNimrodNode {.compileTime.} =
 #===============================================================================
 # Compile-Time Iteration
 
-template iterateFor*(a, b: static[int]): stmt =
-  when a <= b:
-    iteration a
-    iterateFor a + 1, b
-
-template forStatic*(index: expr, slice: Slice[int], pred: stmt):
+template forStatic*(index: expr, slice: Slice[int], predicate: stmt):
                     stmt {.immediate.} =
   const a = slice.a
   const b = slice.b
   when a <= b:
-    template iteration(i: int): stmt =
+    template iterateStartingFrom(i: int): stmt {.dirty.} =
+      when i <= b:
+        iteration i
+        iterateStartingFrom i + 1
+    template iteration(i: int) {.dirty.} =
       block:
         const index = i
-        pred
-    iterateFor a, b
+        predicate
+    iterateStartingFrom a
 
 proc toSeq*(slice: Slice[int]): seq[int] =
   result = newSeq[int]()

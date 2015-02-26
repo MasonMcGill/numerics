@@ -19,15 +19,6 @@ type FullSlice* = object
 let newDim* = NewDim()
 let fullSlice* = FullSlice()
 
-template areAllInts(indices: tuple, dim: int): bool =
-  when compiles(indices[dim]):
-    indices[dim] is int and indices.areAllInts(dim + 1)
-  else:
-    true
-
-template areAllInts(indices: tuple): bool =
-  indices.areAllInts(0)
-
 proc describeIndices(Indices: typedesc[tuple]): seq[string] {.compileTime.} =
   result = newSeq[string]()
   var indices: Indices
@@ -77,7 +68,12 @@ proc subgridExpr(gridExpr, indicesExpr: PNimrodNode,
 
 proc `[]`*(grid: InputGrid|OutputGrid, indices: tuple): auto =
   ## [doc]:
-  when indices.areAllInts and indices.len == grid.nDim:
+  template areAllInts(indices: tuple, dim: int): bool =
+    when compiles(indices[dim]):
+      indices[dim] is int and indices.areAllInts(dim + 1)
+    else:
+      true
+  when indices.areAllInts(0) and indices.len == grid.nDim:
     var indicesArray {.noInit.}: array[indices.len, int]
     forStatic i, 0 .. <indices.len:
       indicesArray[i] = indices[i]
@@ -95,7 +91,12 @@ macro `[]`*(grid: InputGrid|OutputGrid, indices: varargs[expr]): expr =
 
 proc `[]=`*(grid: OutputGrid, indices: tuple, value: any) =
   ## [doc]
-  when indices.areAllInts and indices.len == grid.nDim:
+  template areAllInts(indices: tuple, dim: int): bool =
+    when compiles(indices[dim]):
+      indices[dim] is int and indices.areAllInts(dim + 1)
+    else:
+      true
+  when indices.areAllInts(0) and indices.len == grid.nDim:
     var indicesArray {.noInit.}: array[indices.len, int]
     forStatic i, 0 .. <indices.len:
       indicesArray[i] = indices[i]

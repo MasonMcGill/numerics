@@ -2,20 +2,20 @@ import abstractGrids
 import numericsInternals
 import slices
 
-type Boxed*[Grid: InputGrid|OutputGrid, metaIndices: static[seq[int]]] = object
+type Boxed*[Grid: SomeGrid, metaIndices: static[seq[int]]] = object
   ## [doc]
   base: Grid
   when Grid is InputGrid:
-    typeClassTag_InputGrid: byte
+    typeClassTag_InputGrid*: byte
   when Grid is OutputGrid:
-    typeClassTag_OutputGrid: byte
+    typeClassTag_OutputGrid*: byte
 
-proc box*(grid: InputGrid|OutputGrid, dim: static[int]): auto =
+proc box*(grid: SomeGrid, dim: static[int]): auto =
   ## [doc]
   const metaIndices = toSeq(0 .. <dim) & @[-1] & toSeq(dim .. <grid.nDim)
   Boxed[type(grid), metaIndices](base: grid)
 
-proc unbox*(grid: InputGrid|OutputGrid, dim: static[int]): auto =
+proc unbox*(grid: SomeGrid, dim: static[int]): auto =
   ## [doc]
   const metaIndices = toSeq(0 .. <dim) & toSeq(dim + 1 .. <grid.nDim)
   Boxed[type(grid), metaIndices](base: grid)
@@ -68,3 +68,11 @@ proc unbox*[G, m](grid: Boxed[G, m], dim: static[int]): auto =
     when dim == 0: m[1 .. <m.len]
     else: m[0 .. <dim] & m[dim + 1 .. <m.len]
   Boxed[G, m1](base: grid.base)
+
+proc `==`*[G, m](grid0, grid1: Boxed[G, m]): bool =
+  ## [doc]
+  abstractGrids.`==`(grid0, grid1)
+
+proc `$`*[G, m](grid: Boxed[G, m]): string =
+  ## [doc]
+  abstractGrids.`$`(grid)

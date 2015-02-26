@@ -1,7 +1,10 @@
+import math
+import abstractGrids
+
 type StridedSlice*[Element] = object
   ## [doc]
   first*, last*, stride*: Element
-  typeClassTag_InputGrid: byte
+  typeClassTag_InputGrid*: byte
 
 converter toStridedSlice*[E](slice: Slice[E]): StridedSlice[E] =
   ## [doc]

@@ -1,5 +1,5 @@
+import unittest
 import numerics
-import testing
 
 test "zip(grid0)":
   assert zip(@@[0, 1]).collect == @@[(field0: 0), (field0: 1)]

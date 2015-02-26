@@ -2,32 +2,16 @@ import abstractGrids
 import numericsInternals
 import slices
 
-template iterateFor(a, b: static[int]): stmt =
-  when a <= b:
-    iteration a
-    iterateFor a + 1, b
-
-template forStatic(index: expr, slice: Slice[int], pred: stmt):
-                    stmt {.immediate.} =
-  const a = slice.a
-  const b = slice.b
-  when a <= b:
-    template iteration(i: int): stmt =
-      block:
-        const index = i
-        pred
-    iterateFor a, b
-
-type View*[Grid: InputGrid|OutputGrid] = object
+type View*[Grid: SomeGrid] = object
   ## [doc]
   base: Grid
   slices: array[maxNDim, StridedSlice[int]]
   when Grid is InputGrid:
-    typeClassTag_InputGrid: byte
+    typeClassTag_InputGrid*: byte
   when Grid is OutputGrid:
-    typeClassTag_OutputGrid: byte
+    typeClassTag_OutputGrid*: byte
 
-proc view*(grid: InputGrid|OutputGrid, slices: array): auto =
+proc view*(grid: SomeGrid, slices: array): auto =
   ## [doc]
   static: assert grid.nDim <= maxNDim
   static: assert grid.nDim == slices.len
@@ -68,3 +52,11 @@ proc view*[G](grid: View[G], slices: array): auto =
     result.slices[dim].first = slice0.first + slice1.first * slice0.stride
     result.slices[dim].last = slice0.first + slice1.last * slice0.stride
     result.slices[dim].stride = slice0.stride * slice1.stride
+
+proc `==`*[G](grid0, grid1: View[G]): bool =
+  ## [doc]
+  abstractGrids.`==`(grid0, grid1)
+
+proc `$`*[G](grid: View[G]): string =
+  ## [doc]
+  abstractGrids.`$`(grid)

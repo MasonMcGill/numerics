@@ -14,7 +14,7 @@ def run(target):
     target_path = join(here, target)
     if not exists(dirname(binary_path)):
         makedirs(dirname(binary_path))
-    call(['nim', 'c', '--run', '--verbosity:0',
+    call(['nim', 'c', '--run', '--verbosity:0', '--parallelBuild:1',
           '--path:' + source_path,
           '--out:' + binary_path,
           target_path])
@@ -25,15 +25,14 @@ command = parser.parse_args().command
 
 if command == 'compile':
     run('source/numerics.nim')
-elif command == 'test-all':
+elif command == 'testAll':
     for test in listdir('tests'):
-        if test != 'testing.nim':
-            run('tests/' + test)
-elif command.startswith('test-'):
-    run('tests/' + command[5:] + '.nim')
-elif command == 'benchmark-all':
+        run('tests/' + test)
+elif command.startswith('test'):
+    run('tests/' + command + '.nim')
+elif command == 'benchmarkAll':
     print('Benchmarking is not yet implemented.')
-elif command.startswith('benchmark-'):
+elif command.startswith('benchmark'):
     print('Benchmarking is not yet implemented.')
 else:
     parser.print_help()

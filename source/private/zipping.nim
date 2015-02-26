@@ -6,7 +6,7 @@ type Zipped*[Inputs: tuple] = object
   inputs: Inputs
   size: array[maxNDim, int]
   strides: array[maxNZippedGrids, array[maxNDim, int]]
-  typeClassTag_InputGrid: byte
+  typeClassTag_InputGrid*: byte
 
 proc zip(inputs: tuple): auto =
   result = Zipped[type(inputs)](inputs: inputs)
