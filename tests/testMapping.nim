@@ -25,18 +25,18 @@ test "grid.map(op)":
     check grid.get([1, 0, 0]) == "1!"
     check grid.get([2, 0, 0]) == "2!"
 
-# test "grid.map(op).view(slices)":
-#   let grid = @@[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]].map((e: float) => $e)
-#   let slices = [(1..1).by(1), (0..2).by(2)]
-#   let gridView = @@[["3.0", "5.0"]]
-#   check grid.view(slices) == gridView
+test "grid.map(op).view(slices)":
+  let grid = @@[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]].map(`$`)
+  let slices = [(1..1).by(1), (0..2).by(2)]
+  let gridView = @@[["3.0", "5.0"]]
+  check grid.view(slices) == gridView
 
 test "grid.map(op).box(dim)":
-  let grid = @@[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]].map((e: float) => $e)
+  let grid = @@[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]].map(`$`)
   check grid.box(0) == @@[[["0.0", "1.0", "2.0"], ["3.0", "4.0", "5.0"]]]
   check grid.box(1) == @@[[["0.0", "1.0", "2.0"]], [["3.0", "4.0", "5.0"]]]
 
 test "grid.map(op).unbox(dim)":
-  let grid = @@[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]].map((e: float) => $e)
+  let grid = @@[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]].map(`$`)
   check grid.unbox(0) == @@["0.0", "1.0", "2.0"]
   check grid.unbox(1) == @@["0.0", "3.0"]

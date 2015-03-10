@@ -41,9 +41,9 @@ proc get*[Input, op](grid: Mapped[Input, op], indices: array): auto =
         ident"indices"))
   result = buildResult()
 
-proc view*[Input, op](grid: Mapped[Input, op], slices: array): auto =
-  ## [doc]
-  newMapped(grid.input.view(slices), op)
+# proc view*[Input, op](grid: Mapped[Input, op], slices: array): auto =
+#   ## [doc]
+#   newMapped(grid.input.view(slices), op)
 
 proc box*[Input, op](grid: Mapped[Input, op], dim: static[int]): auto =
   ## [doc]
