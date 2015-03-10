@@ -7,31 +7,31 @@ import zipping
 
 var exprNodes {.compileTime.} = newSeq[PNimrodNode]()
 
-# proc refExpr(exprNode: PNimrodNode): string {.compileTime.} =
-#   exprNodes.add exprNode
-#   "expr" & $(exprNodes.len - 1)
+proc refExpr(exprNode: PNimrodNode): string {.compileTime.} =
+  exprNodes.add exprNode
+  "expr" & $(exprNodes.len - 1)
 
 proc derefExpr(exprRef: string): PNimrodNode {.compileTime.} =
   exprNodes[parseInt(exprRef[4 .. -1])]
 
 type Mapped*[Input: InputGrid, op: static[string]] = object
+  ## [doc]
   input: Input
-  typeClassTag_InputGrid: type(())
+  typeClassTag_InputGrid*: byte
 
 proc newMapped(input: InputGrid, op: static[string]): auto =
   Mapped[type(input), op](input: input)
 
-template map*(input: InputGrid, op: expr): expr {.dirty.} =
-  block:
-    proc doOp(x: any): auto = op(x)
-    macro buildResult(inputExpr: expr): expr =
-      newCall(bindSym"newMapped", inputExpr, newLit(refExpr(bindSym"doOp")))
-    buildResult(input)
+macro map*(input: InputGrid, op: expr): expr =
+  ## [doc]
+  newCall(bindSym"newMapped", input, newLit(refExpr(op)))
 
 proc size*[Input, op](grid: Mapped[Input, op]): auto =
+  ## [doc]
   grid.input.size
 
-proc get*[Input, op](grid: Mapped[Input, op], indices: tuple): auto =
+proc get*[Input, op](grid: Mapped[Input, op], indices: array): auto =
+  ## [doc]
   macro buildResult: expr =
     newCall(
       derefExpr(op),
@@ -41,8 +41,25 @@ proc get*[Input, op](grid: Mapped[Input, op], indices: tuple): auto =
         ident"indices"))
   result = buildResult()
 
-proc view*[Input, op](grid: Mapped[Input, op], indices: tuple): auto =
-  newMapped(grid.input.view(indices), op)
+proc view*[Input, op](grid: Mapped[Input, op], slices: array): auto =
+  ## [doc]
+  newMapped(grid.input.view(slices), op)
+
+proc box*[Input, op](grid: Mapped[Input, op], dim: static[int]): auto =
+  ## [doc]
+  newMapped(grid.input.box(dim), op)
+
+proc unbox*[Input, op](grid: Mapped[Input, op], dim: static[int]): auto =
+  ## [doc]
+  newMapped(grid.input.unbox(dim), op)
+
+proc `==`*[Input, op](grid0, grid1: Mapped[Input, op]): bool =
+  ## [doc]
+  abstractGrids.`==`(grid0, grid1)
+
+proc `$`*[Input, op](grid: Mapped[Input, op]): string =
+  ## [doc]
+  abstractGrids.`$`(grid)
 
 proc `+.`*(grid: InputGrid): auto =
   proc op(e: any): auto = +e
@@ -140,79 +157,79 @@ proc arctan*(grid: InputGrid): auto =
   proc op(e: any): auto = arctan(e)
   grid.map(op)
 
-proc `+.`*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc `+.`*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = e[0] + e[1]
   zip(grid0, grid1).map(op)
 
-proc `-.`*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc `-.`*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = e[0] - e[1]
   zip(grid0, grid1).map(op)
 
-proc `*.`*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc `*.`*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = e[0] * e[1]
   zip(grid0, grid1).map(op)
 
-proc `/.`*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc `/.`*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = e[0] / e[1]
   zip(grid0, grid1).map(op)
 
-proc `^.`*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc `^.`*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = pow(e[0], e[1])
   zip(grid0, grid1).map(op)
 
-proc `<.`*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc `<.`*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = e[0] > e[1]
   zip(grid0, grid1).map(op)
 
-proc `>.`*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc `>.`*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = e[0] < e[1]
   zip(grid0, grid1).map(op)
 
-proc `<=.`*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc `<=.`*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = e[0] >= e[1]
   zip(grid0, grid1).map(op)
 
-proc `>=.`*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc `>=.`*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = e[0] <= e[1]
   zip(grid0, grid1).map(op)
 
-proc `==.`*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc `==.`*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = e[0] == e[1]
   zip(grid0, grid1).map(op)
 
-proc `!=.`*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc `!=.`*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = e[0] != e[1]
   zip(grid0, grid1).map(op)
 
-proc `&.`*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc `&.`*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = e[0] != e[1]
   zip(grid0, grid1).map(op)
 
-proc `mod`*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc `mod`*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = e[0] mod e[1]
   zip(grid0, grid1).map(op)
 
-proc pow*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc pow*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = pow(e[0], e[1])
   zip(grid0, grid1).map(op)
 
-proc arctan2*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc arctan2*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = arctan2(e[0], e[1])
   zip(grid0, grid1).map(op)
 
-proc min*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc min*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = min(e[0], e[1])
   zip(grid0, grid1).map(op)
 
-proc max*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc max*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = max(e[0], e[1])
   zip(grid0, grid1).map(op)
 
-proc argmin*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc argmin*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = int(e[0] > e[1])
   zip(grid0, grid1).map(op)
 
-proc argmax*(grid0: InputGrid0, grid1: InputGrid1): auto =
+proc argmax*(grid0: InputGrid, grid1: InputGrid): auto =
   proc op(e: tuple): auto = int(e[0] <= e[1])
   zip(grid0, grid1).map(op)
 

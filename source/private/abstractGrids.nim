@@ -6,35 +6,21 @@ type InputGrid* = generic X
   ## [doc]
   var x: X; compiles(x.typeClassTag_InputGrid)
 
-type InputGrid0* = InputGrid
-type InputGrid1* = InputGrid
-type InputGrid2* = InputGrid
-type InputGrid3* = InputGrid
-
 type OutputGrid* = generic X
   ## [doc]
   var x: X; compiles(x.typeClassTag_OutputGrid)
 
-type OutputGrid0* = OutputGrid
-type OutputGrid1* = OutputGrid
-type OutputGrid2* = OutputGrid
-type OutputGrid3* = OutputGrid
-
 type StatefulGrid* = InputGrid and OutputGrid
   ## [doc]
-
-type StatefulGrid0* = StatefulGrid
-type StatefulGrid1* = StatefulGrid
-type StatefulGrid2* = StatefulGrid
-type StatefulGrid3* = StatefulGrid
 
 type SomeGrid* = InputGrid or OutputGrid
   ## [doc]
 
-type SomeGrid0* = SomeGrid
-type SomeGrid1* = SomeGrid
-type SomeGrid2* = SomeGrid
-type SomeGrid3* = SomeGrid
+type Scalar* = generic X
+  ## [doc]
+  var x: X
+  not compiles(x.typeClassTag_InputGrid)
+  not compiles(x.typeClassTag_OutputGrid)
 
 template nDim*(Grid: typedesc[SomeGrid]): int =
   ## [doc]

@@ -28,7 +28,7 @@ if command == 'compile':
     run('source/numerics.nim')
 elif command == 'testAll':
     for test in listdir('tests'):
-        if test != "nimcache":
+        if test.endswith(".nim"):
             run('tests/' + test)
 elif command.startswith('test'):
     run('tests/' + command + '.nim')
