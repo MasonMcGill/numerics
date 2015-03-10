@@ -1,3 +1,4 @@
+import macros
 import abstractGrids
 import numericsInternals
 
@@ -9,108 +10,148 @@ type Zipped*[Inputs: tuple] = object
   typeClassTag_InputGrid*: byte
 
 proc zip(inputs: tuple): auto =
+  proc getResultNDim: int =
+    result = 0
+    forStatic i, 0 .. <inputs.len:
+      result = max(result, inputs[i].nDim)
+  const resultNDim = getResultNDim()
   result = Zipped[type(inputs)](inputs: inputs)
+  forStatic iAndDim, 0 .. <(inputs.len * resultNDim):
+    const i = iAndDim div resultNDim
+    const dim = iAndDim mod resultNDim
+    when dim < inputs[i].nDim:
+      result.size[dim] = max(result.size[dim], inputs[i].size[dim])
+      result.strides[i][dim] = int(inputs[i].size[dim] > 1)
 
-proc zip*(input0: InputGrid0): auto =
+proc zip*(input0: InputGrid): auto =
   ## [doc]
   zip((field0: input0))
 
-proc zip*(input0: InputGrid0, input1: InputGrid1): auto =
+proc zip*(input0: InputGrid, input1: any): auto =
   ## [doc]
   zip((input0, input1))
 
-proc zip*(input0: InputGrid0, input1: InputGrid1, input2: InputGrid2): auto =
+proc zip*(input0: InputGrid, input1: any, input2: any): auto =
   ## [doc]
   zip((input0, input1, input2))
 
-proc zip*(input0: InputGrid0, input1: InputGrid1,
-          input2: InputGrid2, input3: InputGrid3): auto =
+proc zip*(input0: InputGrid, input1: any, input2: any, input3: any): auto =
   ## [doc]
   zip((input0, input1, input2, input3))
 
 proc size*[Inputs](grid: Zipped[Inputs]): auto =
   ## [doc]
-  proc maxNDim: int =
+  proc getGridNDim: int =
     result = 0
     forStatic i, 0 .. <grid.inputs.len:
       result = max(result, grid.inputs[i].nDim)
-  var result {.noInit.}: array[maxNDim(), int]
-  result[0 .. result.high] = grid.size[0 .. result.high]
-  result
+  var res {.noInit.}: array[getGridNDim(), int]
+  forStatic dim, 0 .. <res.len:
+    res[dim] = grid.size[dim]
+  res
 
-proc get*[Inputs](grid: Zipped[Inputs], indices: tuple): auto =
+proc getBroadcast(grid: InputGrid, strides: array[maxNDim, int],
+                  indices: array): auto =
+  var adjustedIndices {.noInit.}: array[grid.nDim, int]
+  forStatic dim, 0 .. <grid.nDim:
+    adjustedIndices[dim] = strides[dim] * indices[dim]
+  grid.get(adjustedIndices)
+
+proc getExpr(n: int): NimNode {.compileTime.} =
+  result = newPar()
+  for i in 0 .. <n:
+    result.add(
+      newColonExpr(
+        ident("field" & $i),
+        newCall(
+          bindSym"getBroadcast",
+          newBracketExpr(
+            newDotExpr(ident"grid", ident"inputs"),
+            newLit(i)),
+          newBracketExpr(
+            newDotExpr(ident"grid", ident"strides"),
+            newLit(i)),
+          ident"indices")))
+
+proc get*[Inputs](grid: Zipped[Inputs], indices: array): auto =
   ## [doc]
-  template resultElement(i: int): expr =
-    let input = grid.inputs[i]
-    input.get(indices.get(0 .. <input.nDim))
-  (0 .. <grid.inputs.len).staticMap(resultElement)
+  macro buildResult: expr =
+    getExpr(grid.inputs.len)
+  buildResult()
 
-# proc zeros(n: static[int]): auto =
-#   macro buildResult: expr =
-#     result = newNimNode nnkPar
-#     forStatic i in 0 .. <n:
-#       result.add(newNimNode(nnkExprColonExpr).add(
-#         ident("field" & $i), newLit(0)))
-#   buildResult()
-#
-# type Zipped*[Inputs: tuple, Meta] = object
-#   inputs: Inputs
-#   meta: Meta
-#   typeClassTag_InputGrid: type(())
-#
-# proc zipProc(inputs: tuple): auto =
-#   proc maxNDim(i: static[int]): int =
-#     when i < inputs.len:
-#       max(inputs[i].nDim, maxNDim(i + 1))
-#     else:
-#       0
-#   var size: type(zeros(maxNDim(0)))
-#   var strides: array[inputs.len, array[maxNDim(0), int]]
-#   forStatic iAndDim in 0 .. <(inputs.len * maxNDim(0)):
-#     const i = iAndDim div maxNDim(0)
-#     const dim = iAndDim mod maxNDim(0)
-#     when dim < inputs[i].nDim:
-#       size[dim] = max(size[dim], inputs[i].size[dim])
-#       strides[i][dim] = int(inputs[i].size[dim] > 1)
-#   let meta = (size: size, strides: strides)
-#   result = Zipped[type(inputs), type(meta)](inputs: inputs, meta: meta)
-#
-# macro zip*(grid0: InputGrid, others: varargs[expr]): expr =
-#   others.insert 0, grid0
-#   result = newCall(bindSym"zipProc", pack(others))
-#
-# proc size*[Inputs, Meta](grid: Zipped[Inputs, Meta]): auto =
-#   grid.meta.size
-#
-# proc get*[Inputs, Meta](grid: Zipped[Inputs, Meta], indices: tuple): auto =
-#   macro buildResult: expr =
-#     result = newNimNode nnkPar
-#     forStatic i in 0 .. <grid.inputs.len:
-#       let adjustedIndices = newNimNode nnkPar
-#       for dim in 0 .. <grid.inputs[i].nDim:
-#         adjustedIndices.add(newNimNode(nnkExprColonExpr).add(
-#           ident("field" & $dim),
-#           newCall("*",
-#             newNimNode(nnkBracketExpr).add(
-#               newNimNode(nnkBracketExpr).add(
-#                 newDotExpr(
-#                   newDotExpr(ident"grid", ident"meta"),
-#                   ident"strides"),
-#                 newLit(i)),
-#               newLit(dim)),
-#             newNimNode(nnkBracketExpr).add(
-#               ident"indices", newLit(dim)))))
-#       result.add(newNimNode(nnkExprColonExpr).add(
-#         ident("field" & $i),
-#         newNimNode(nnkBracketExpr).add(
-#           newNimNode(nnkBracketExpr).add(
-#             newDotExpr(ident"grid", ident"inputs"),
-#             newLit(i)),
-#           adjustedIndices)))
-#   result = buildResult()
+proc viewBroadcast(grid: InputGrid, slices: array): auto =
+  var adjustedSlices {.noInit.}: array[grid.nDim, int]
+  forStatic dim, 0 .. <grid.nDim:
+    adjustedSlices[dim] = slices[dim]
+  grid.view(adjustedSlices)
 
-# proc view*[Inputs, Meta](grid: Zipped[Inputs, Meta], indices: tuple): auto =
-#   # TODO: support broadcasting.
-#   template viewInput(i: int): expr =
-#     grid.inputs[i].view(indices.get(0 .. <grid.inputs[i].nDim))
-#   zipProc((0 .. <grid.inputs.len).staticMap(viewInput))
+proc viewExpr(n: int): NimNode {.compileTime.} =
+  result = newCall(bindSym"zip")
+  for i in 0 .. <n:
+    result.add(
+      newCall(
+        bindSym"viewBroadcast",
+        newBracketExpr(
+          newDotExpr(ident"grid", ident"inputs"),
+          newLit(i)),
+        ident"slices"))
+
+proc view*[Inputs](grid: Zipped[Inputs], slices: array): auto =
+  ## [doc]
+  macro buildResult: expr =
+    viewExpr(grid.inputs.len)
+  buildResult()
+
+proc boxBroadcast(grid: InputGrid, dim: static[int]): auto =
+  when dim <= grid.nDim:
+    grid.box(dim)
+  else:
+    grid
+
+proc boxExpr(n: int): NimNode {.compileTime.} =
+  result = newCall(bindSym"zip")
+  for i in 0 .. <n:
+    result.add(
+      newCall(
+        bindSym"boxBroadcast",
+        newBracketExpr(
+          newDotExpr(ident"grid", ident"inputs"),
+          newLit(i)),
+        ident"dim"))
+
+proc box*[Inputs](grid: Zipped[Inputs], dim: static[int]): auto =
+  ## [doc]
+  macro buildResult: expr =
+    boxExpr(grid.inputs.len)
+  buildResult()
+
+proc unboxBroadcast(grid: InputGrid, dim: static[int]): auto =
+  when dim < grid.nDim:
+    grid.unbox(dim)
+  else:
+    grid
+
+proc unboxExpr(n: int): NimNode {.compileTime.} =
+  result = newCall(bindSym"zip")
+  for i in 0 .. <n:
+    result.add(
+      newCall(
+        bindSym"unboxBroadcast",
+        newBracketExpr(
+          newDotExpr(ident"grid", ident"inputs"),
+          newLit(i)),
+        ident"dim"))
+
+proc unbox*[Inputs](grid: Zipped[Inputs], dim: static[int]): auto =
+  ## [doc]
+  macro buildResult: expr =
+    unboxExpr(grid.inputs.len)
+  buildResult()
+
+proc `==`*[Inputs](grid0, grid1: Zipped[Inputs]): bool =
+  ## [doc]
+  abstractGrids.`==`(grid0, grid1)
+
+proc `$`*[Inputs](grid: Zipped[Inputs]): string =
+  ## [doc]
+  abstractGrids.`$`(grid)

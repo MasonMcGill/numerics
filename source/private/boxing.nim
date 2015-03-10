@@ -23,10 +23,10 @@ proc unbox*(grid: SomeGrid, dim: static[int]): auto =
 proc size*[G, m](grid: Boxed[G, m]): auto =
   ## [doc]
   const m1 = m
-  var result {.noInit.}: array[m.len, int]
+  var res {.noInit.}: array[m.len, int]
   forStatic dim, 0 .. <m1.len:
-    result[dim] = when m1[dim] != -1: grid.base.size[m1[dim]] else: 1
-  result
+    res[dim] = when m1[dim] != -1: grid.base.size[m1[dim]] else: 1
+  res
 
 proc get*[G, m](grid: Boxed[G, m], indices: array): auto =
   ## [doc]

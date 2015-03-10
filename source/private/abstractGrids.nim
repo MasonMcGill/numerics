@@ -60,7 +60,7 @@ template Element*(grid: InputGrid): typedesc =
   ## [doc]
   type(grid.get(grid.Indices.new[]))
 
-proc yieldIndicesStmt(nDim: int): PNimrodNode {.compileTime.} =
+proc yieldIndicesStmt(nDim: int): NimNode {.compileTime.} =
   if nDim == 0:
     result = newYieldStmt(bindSym"emptyIntArray")
   else:
@@ -93,7 +93,7 @@ iterator pairs*(grid: InputGrid): auto =
   for i in grid.indices:
     yield (i, grid.get(i))
 
-proc `==`*(grid0: InputGrid0, grid1: InputGrid1): bool =
+proc `==`*(grid0: InputGrid, grid1: any): bool =
   ## [doc]
   if grid0.size != grid1.size:
     return false
@@ -106,7 +106,7 @@ proc describeGrid[R](grid: InputGrid, indices: array[R, int]): string =
   when indices.len == grid.nDim:
     result = $(grid.get(indices))
   else:
-    const delim = "," & repeatStr(grid.nDim - indices.len - 1, "\n") & " "
+    const delim = "," & "\n".repeat(grid.nDim - indices.len - 1) & " "
     result = "["
     for i in 0 .. <grid.size[indices.len]:
       var augIndices: array[indices.len + 1, int]

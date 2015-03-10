@@ -20,10 +20,10 @@ proc view*(grid: SomeGrid, slices: array): auto =
 
 proc size*[G](grid: View[G]): auto =
   ## [doc]
-  var result {.noInit.}: grid.base.Indices
-  forStatic dim, 0 .. <result.len:
-    result[dim] = grid.slices[dim].len
-  result
+  var res {.noInit.}: grid.base.Indices
+  forStatic dim, 0 .. <res.len:
+    res[dim] = grid.slices[dim].len
+  res
 
 proc get*[G](grid: View[G], indices: array): auto =
   ## [doc]

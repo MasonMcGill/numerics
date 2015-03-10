@@ -14,7 +14,8 @@ def run(target):
     target_path = join(here, target)
     if not exists(dirname(binary_path)):
         makedirs(dirname(binary_path))
-    call(['nim', 'c', '--run', '--verbosity:0', '--parallelBuild:1',
+    call(['nim', 'c', '--run', '--parallelBuild:1',
+          '--verbosity:0', '--warning[Deprecated]:off',
           '--path:' + source_path,
           '--out:' + binary_path,
           target_path])

@@ -16,18 +16,18 @@ type DenseGrid* {.shallow.} [nDim: static[int]; Element] = object
 proc newDenseGrid*[R](Element: typedesc, size: array[R, int]): auto =
   ## [doc]
   const n = size.len
-  var result: DenseGrid[n, Element]
+  var res: DenseGrid[n, Element]
   for i in countDown(<n, 0):
-    result.strides[i] =
-      if i < n - 1: size[i+1] * result.strides[i+1]
+    res.strides[i] =
+      if i < n - 1: size[i+1] * res.strides[i+1]
       else: 1
   var nElements = 1
   for i in 0 .. <n:
     nElements *= size[i]
-  result.size = size
-  result.buffer = newSeq[Element](nElements)
-  result.data = if nElements > 0: addr(result.buffer[0]) else: nil
-  result
+  res.size = size
+  res.buffer = newSeq[Element](nElements)
+  res.data = if nElements > 0: addr(res.buffer[0]) else: nil
+  res
 
 macro newDenseGrid*(Element: expr, size: varargs[int]): expr =
   ## [doc]
@@ -51,8 +51,8 @@ proc highAlongDim(a: any, dim: static[int]): int =
   when dim == 0: a.high
   else: a[0].highAlongDim(dim - 1)
 
-proc copyArrayToGridStmt(aNDim: int, elementType, arrayExpr: PNimrodNode):
-                         PNimrodNode {.compileTime.} =
+proc copyArrayToGridStmt(aNDim: int, elementType, arrayExpr: NimNode):
+                         NimNode {.compileTime.} =
   let constrExpr = newCall(bindSym"newDenseGrid", elementType)
   for i in 0 .. <aNDim:
     constrExpr.add(newCall(bindSym"sizeAlongDim", arrayExpr, newLit(i)))
@@ -131,29 +131,29 @@ proc view*[n, E](grid: DenseGrid[n, E], slices: array): DenseGrid[n, E] =
 proc box*[n, E](grid: DenseGrid[n, E], dim: static[int]): auto =
   ## [doc]
   static: assert dim >= 0 and dim <= n
-  var result {.noInit.}: DenseGrid[n + 1, E]
-  result.size[dim] = 1
-  result.size[0 .. <dim] = grid.size[0 .. <dim]
-  result.size[dim + 1 .. <n + 1] = grid.size[dim .. <n]
-  result.strides[dim] = 0
-  result.strides[0 .. <dim] = grid.strides[0 .. <dim]
-  result.strides[dim + 1 .. <n + 1] = grid.strides[dim .. <n]
-  result.buffer.shallowCopy grid.buffer
-  result.data = grid.data
-  result
+  var res {.noInit.}: DenseGrid[n + 1, E]
+  res.size[dim] = 1
+  res.size[0 .. <dim] = grid.size[0 .. <dim]
+  res.size[dim + 1 .. <n + 1] = grid.size[dim .. <n]
+  res.strides[dim] = 0
+  res.strides[0 .. <dim] = grid.strides[0 .. <dim]
+  res.strides[dim + 1 .. <n + 1] = grid.strides[dim .. <n]
+  res.buffer.shallowCopy grid.buffer
+  res.data = grid.data
+  res
 
 proc unbox*[n, E](grid: DenseGrid[n, E], dim: static[int]): auto =
   ## [doc]
   static: assert n > 0
   static: assert dim >= 0 and dim < n
-  var result {.noInit.}: DenseGrid[n - 1, E]
-  result.size[0 .. <dim] = grid.size[0 .. <dim]
-  result.size[dim .. <n - 1] = grid.size[dim + 1 .. <n]
-  result.strides[0 .. <dim] = grid.strides[0 .. <dim]
-  result.strides[dim .. <n - 1] = grid.strides[dim + 1 .. <n]
-  result.buffer.shallowCopy grid.buffer
-  result.data = grid.data
-  result
+  var res {.noInit.}: DenseGrid[n - 1, E]
+  res.size[0 .. <dim] = grid.size[0 .. <dim]
+  res.size[dim .. <n - 1] = grid.size[dim + 1 .. <n]
+  res.strides[0 .. <dim] = grid.strides[0 .. <dim]
+  res.strides[dim .. <n - 1] = grid.strides[dim + 1 .. <n]
+  res.buffer.shallowCopy grid.buffer
+  res.data = grid.data
+  res
 
 proc `==`*[n, E](grid0, grid1: DenseGrid[n, E]): bool =
   ## [doc]

@@ -1,3 +1,4 @@
 /binary
+**/*.html
 **/nimcache
 **/.DS_Store

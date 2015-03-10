@@ -11,22 +11,22 @@ const emptyIntArray* = (block: (var x: array[0, int]; x))
 #===============================================================================
 # AST Manipulation
 
-proc newBracket*(args: varargs[PNimrodNode]): PNimrodNode {.compileTime.} =
+proc newBracket*(args: varargs[NimNode]): NimNode {.compileTime.} =
   newNimNode(nnkBracket).add(args)
 
-proc newBracketExpr*(args: varargs[PNimrodNode]): PNimrodNode {.compileTime.} =
+proc newBracketExpr*(args: varargs[NimNode]): NimNode {.compileTime.} =
   newNimNode(nnkBracketExpr).add(args)
 
-proc newObjConstr*(args: varargs[PNimrodNode]): PNimrodNode {.compileTime.} =
+proc newObjConstr*(args: varargs[NimNode]): NimNode {.compileTime.} =
   newNimNode(nnkObjConstr).add(args)
 
-proc newTypeOfExpr*(arg: PNimrodNode): PNimrodNode {.compileTime.} =
+proc newTypeOfExpr*(arg: NimNode): NimNode {.compileTime.} =
   newNimNode(nnkTypeOfExpr).add(arg)
 
-proc newForStmt*(args: varargs[PNimrodNode]): PNimrodNode {.compileTime.} =
+proc newForStmt*(args: varargs[NimNode]): NimNode {.compileTime.} =
   newNimNode(nnkForStmt).add(args)
 
-proc newYieldStmt*(args: varargs[PNimrodNode]): PNimrodNode {.compileTime.} =
+proc newYieldStmt*(args: varargs[NimNode]): NimNode {.compileTime.} =
   newNimNode(nnkYieldStmt).add(args)
 
 #===============================================================================

@@ -2,7 +2,7 @@ import macros
 import abstractGrids
 import numericsInternals
 
-proc pack(args: PNimrodNode): PNimrodNode {.compileTime.} =
+proc pack(args: NimNode): NimNode {.compileTime.} =
   result = newNimNode nnkPar
   for i in 0 .. <args.len:
     result.add(newNimNode(nnkExprColonExpr).add(
@@ -34,14 +34,14 @@ proc describeIndices(Indices: typedesc[tuple]): seq[string] {.compileTime.} =
     elif indices[dim] is NewDim:
       result.add "NewDim"
 
-proc expandedFullSliceExpr(gridExpr: PNimrodNode, dim: int):
-                           PNimrodNode {.compileTime.} =
+proc expandedFullSliceExpr(gridExpr: NimNode, dim: int):
+                           NimNode {.compileTime.} =
   let lenExpr = newBracketExpr(newDotExpr(gridExpr, ident"size"), newLit(dim))
   newCall("by", newCall("..", newLit(0), newCall("<", lenExpr)), newLit(1))
 
-proc subgridExpr(gridExpr, indicesExpr: PNimrodNode,
+proc subgridExpr(gridExpr, indicesExpr: NimNode,
                  nDim: int, indexTypes: seq[string]):
-                 PNimrodNode {.compileTime.} =
+                 NimNode {.compileTime.} =
   result = gridExpr
   if "int" in indexTypes or "Slice" in indexTypes or
      "StridedSlice" in indexTypes:
