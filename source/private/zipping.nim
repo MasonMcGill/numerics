@@ -1,12 +1,13 @@
 import macros
 import abstractGrids
 import numericsInternals
+import slices
 
 type Zipped*[Inputs: tuple] = object
   ## [doc]
   inputs: Inputs
-  size: array[maxNDim, int]
-  strides: array[maxNZippedGrids, array[maxNDim, int]]
+  sizeBuffer: array[maxNDim, int]
+  stridesBuffer: array[maxNZippedGrids, array[maxNDim, int]]
   typeClassTag_InputGrid*: byte
 
 proc zip(inputs: tuple): auto =
@@ -20,8 +21,8 @@ proc zip(inputs: tuple): auto =
     const i = iAndDim div resultNDim
     const dim = iAndDim mod resultNDim
     when dim < inputs[i].nDim:
-      result.size[dim] = max(result.size[dim], inputs[i].size[dim])
-      result.strides[i][dim] = int(inputs[i].size[dim] > 1)
+      result.sizeBuffer[dim] = max(result.sizeBuffer[dim], inputs[i].size[dim])
+      result.stridesBuffer[i][dim] = int(inputs[i].size[dim] > 1)
 
 proc zip*(input0: InputGrid): auto =
   ## [doc]
@@ -47,7 +48,7 @@ proc size*[Inputs](grid: Zipped[Inputs]): auto =
       result = max(result, grid.inputs[i].nDim)
   var res {.noInit.}: array[getGridNDim(), int]
   forStatic dim, 0 .. <res.len:
-    res[dim] = grid.size[dim]
+    res[dim] = grid.sizeBuffer[dim]
   res
 
 proc getBroadcast(grid: InputGrid, strides: array[maxNDim, int],
@@ -69,7 +70,7 @@ proc getExpr(n: int): NimNode {.compileTime.} =
             newDotExpr(ident"grid", ident"inputs"),
             newLit(i)),
           newBracketExpr(
-            newDotExpr(ident"grid", ident"strides"),
+            newDotExpr(ident"grid", ident"stridesBuffer"),
             newLit(i)),
           ident"indices")))
 
@@ -80,7 +81,7 @@ proc get*[Inputs](grid: Zipped[Inputs], indices: array): auto =
   buildResult()
 
 proc viewBroadcast(grid: InputGrid, slices: array): auto =
-  var adjustedSlices {.noInit.}: array[grid.nDim, int]
+  var adjustedSlices {.noInit.}: array[grid.nDim, StridedSlice[int]]
   forStatic dim, 0 .. <grid.nDim:
     adjustedSlices[dim] = slices[dim]
   grid.view(adjustedSlices)

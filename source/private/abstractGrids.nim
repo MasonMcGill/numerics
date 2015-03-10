@@ -109,11 +109,11 @@ proc describeGrid[R](grid: InputGrid, indices: array[R, int]): string =
     const delim = "," & "\n".repeat(grid.nDim - indices.len - 1) & " "
     result = "["
     for i in 0 .. <grid.size[indices.len]:
-      var augIndices: array[indices.len + 1, int]
-      augIndices[0 .. <indices.len] = indices
-      augIndices[indices.len] = i
+      var adjustedIndices: array[indices.len + 1, int]
+      adjustedIndices[0 .. <indices.len] = indices
+      adjustedIndices[indices.len] = i
       if i > 0: result &= delim
-      result &= describeGrid(grid, augIndices).replace("\n", "\n ")
+      result &= describeGrid(grid, adjustedIndices).replace("\n", "\n ")
     result &= "]"
 
 proc `$`*(grid: InputGrid): string =

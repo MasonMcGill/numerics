@@ -34,7 +34,7 @@ proc get*[G, m](grid: Boxed[G, m], indices: array): auto =
   const m1 = m
   var adjustedIndices {.noInit.}: grid.base.Indices
   forStatic dim, 0 .. <adjustedIndices.len:
-    adjustedIndices[dim] = when dim in m: indices[m1.find(dim)] else: 0
+    adjustedIndices[dim] = when dim in m1: indices[m1.find(dim)] else: 0
   grid.base.get(adjustedIndices)
 
 proc put*[G, m](grid: Boxed[G, m], indices: array, value: any) =
