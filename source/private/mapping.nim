@@ -3,6 +3,7 @@ import macros
 import math
 import strutils
 import abstractGrids
+import denseGrids
 import zipping
 
 var exprNodes {.compileTime.} = newSeq[PNimrodNode]()
@@ -61,177 +62,186 @@ proc `$`*[Input, op](grid: Mapped[Input, op]): string =
   ## [doc]
   abstractGrids.`$`(grid)
 
-proc `+.`*(grid: InputGrid): auto =
-  proc op(e: any): auto = +e
-  grid.map(op)
+proc scalarRe(x: any): auto = x.re
+proc scalarIm(x: any): auto = x.im
+proc scalarAbs(x: any): auto = abs(x)
+proc scalarSqrt(x: any): auto = sqrt(x)
+proc scalarExp(x: any): auto = exp(x)
+proc scalarLn(x: any): auto = ln(x)
+proc scalarLog2(x: any): auto = log2(x)
+proc scalarLog10(x: any): auto = log10(x)
+proc scalarFloor(x: any): auto = floor(x)
+proc scalarCeil(x: any): auto = ceil(x)
+proc scalarRound(x: any): auto = round(x)
+proc scalarSin(x: any): auto = sin(x)
+proc scalarCos(x: any): auto = cos(x)
+proc scalarTan(x: any): auto = tan(x)
+proc scalarSinh(x: any): auto = sinh(x)
+proc scalarCosh(x: any): auto = cosh(x)
+proc scalarTanh(x: any): auto = tanh(x)
+proc scalarArcsin(x: any): auto = arcsin(x)
+proc scalarArccos(x: any): auto = arccos(x)
+proc scalarArctan(x: any): auto = arctan(x)
 
-proc `-.`*(grid: InputGrid): auto =
-  proc op(e: any): auto = -e
-  grid.map(op)
+proc scalarAdd(x: tuple): auto = x[0] + x[1]
+proc scalarSub(x: tuple): auto = x[0] - x[1]
+proc scalarMul(x: tuple): auto = x[0] * x[1]
+proc scalarDiv(x: tuple): auto = x[0] / x[1]
+proc scalarPow(x: tuple): auto = pow(x[0], x[1])
+proc scalarLt(x: tuple): auto = x[0] < x[1]
+proc scalarGt(x: tuple): auto = x[0] > x[1]
+proc scalarLe(x: tuple): auto = x[0] <= x[1]
+proc scalarGe(x: tuple): auto = x[0] >= x[1]
+proc scalarEq(x: tuple): auto = x[0] == x[1]
+proc scalarNe(x: tuple): auto = x[0] != x[1]
+proc scalarCat(x: tuple): auto = x[0] & x[1]
+proc scalarMod(x: tuple): auto = x[0] mod x[1]
+proc scalarArctan2(x: tuple): auto = arctan2(x[0], x[1])
+proc scalarMin(x: tuple): auto = min(x[0], x[1])
+proc scalarMax(x: tuple): auto = max(x[0], x[1])
+proc scalarArgmin(x: tuple): auto = int(x[0] > x[1])
+proc scalarArgmax(x: tuple): auto = int(x[0] <= x[1])
 
-proc `$.`*(grid: InputGrid): auto =
-  proc op(e: any): auto = $e
-  grid.map(op)
+proc `+`*(x: InputGrid): auto =
+  x.map(`+`)
 
-proc `<.`*(grid: InputGrid): auto =
-  proc op(e: any): auto = <e
-  grid.map(op)
+proc `+.`*(x: InputGrid): auto =
+  x.map(`+`)
 
-proc re*(grid: InputGrid): auto =
-  proc op(e: any): auto = e.re
-  grid.map(op)
+proc `-`*(x: InputGrid): auto =
+  x.map(`-`)
 
-proc im*(grid: InputGrid): auto =
-  proc op(e: any): auto = e.im
-  grid.map(op)
+proc `-.`*(x: InputGrid): auto =
+  x.map(`-`)
 
-proc abs*(grid: InputGrid): auto =
-  proc op(e: any): auto = abs(e)
-  grid.map(op)
+proc `$.`*(x: InputGrid): auto =
+  x.map(`$`)
 
-proc sqrt*(grid: InputGrid): auto =
-  proc op(e: any): auto = sqrt(e)
-  grid.map(op)
+proc `<.`*(x: InputGrid): auto =
+  x.map(`<`)
 
-proc exp*(grid: InputGrid): auto =
-  proc op(e: any): auto = exp(e)
-  grid.map(op)
+proc re*(x: InputGrid): auto =
+  x.map(scalarRe)
 
-proc ln*(grid: InputGrid): auto =
-  proc op(e: any): auto = ln(e)
-  grid.map(op)
+proc im*(x: InputGrid): auto =
+  x.map(scalarIm)
 
-proc log2*(grid: InputGrid): auto =
-  proc op(e: any): auto = log2(e)
-  grid.map(op)
+proc abs*(x: InputGrid): auto =
+  x.map(scalarAbs)
 
-proc log10*(grid: InputGrid): auto =
-  proc op(e: any): auto = log10(e)
-  grid.map(op)
+proc sqrt*(x: InputGrid): auto =
+  x.map(scalarSqrt)
 
-proc floor*(grid: InputGrid): auto =
-  proc op(e: any): auto = floor(e)
-  grid.map(op)
+proc exp*(x: InputGrid): auto =
+  x.map(scalarExp)
 
-proc ceil*(grid: InputGrid): auto =
-  proc op(e: any): auto = ceil(e)
-  grid.map(op)
+proc ln*(x: InputGrid): auto =
+  x.map(scalarLn)
 
-proc round*(grid: InputGrid): auto =
-  proc op(e: any): auto = round(e)
-  grid.map(op)
+proc log2*(x: InputGrid): auto =
+  x.map(scalarLog2)
 
-proc sin*(grid: InputGrid): auto =
-  proc op(e: any): auto = sin(e)
-  grid.map(op)
+proc log10*(x: InputGrid): auto =
+  x.map(scalarLog10)
 
-proc cos*(grid: InputGrid): auto =
-  proc op(e: any): auto = cos(e)
-  grid.map(op)
+proc floor*(x: InputGrid): auto =
+  x.map(scalarFloor)
 
-proc tan*(grid: InputGrid): auto =
-  proc op(e: any): auto = tan(e)
-  grid.map(op)
+proc ceil*(x: InputGrid): auto =
+  x.map(scalarCeil)
 
-proc sinh*(grid: InputGrid): auto =
-  proc op(e: any): auto = sinh(e)
-  grid.map(op)
+proc round*(x: InputGrid): auto =
+  x.map(scalarRound)
 
-proc cosh*(grid: InputGrid): auto =
-  proc op(e: any): auto = cosh(e)
-  grid.map(op)
+proc sin*(x: InputGrid): auto =
+  x.map(scalarSin)
 
-proc tanh*(grid: InputGrid): auto =
-  proc op(e: any): auto = tanh(e)
-  grid.map(op)
+proc cos*(x: InputGrid): auto =
+  x.map(scalarCos)
 
-proc arcsin*(grid: InputGrid): auto =
-  proc op(e: any): auto = arcsin(e)
-  grid.map(op)
+proc tan*(x: InputGrid): auto =
+  x.map(scalarTan)
 
-proc arccos*(grid: InputGrid): auto =
-  proc op(e: any): auto = arccos(e)
-  grid.map(op)
+proc sinh*(x: InputGrid): auto =
+  x.map(scalarSinh)
 
-proc arctan*(grid: InputGrid): auto =
-  proc op(e: any): auto = arctan(e)
-  grid.map(op)
+proc cosh*(x: InputGrid): auto =
+  x.map(scalarCosh)
 
-proc `+.`*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = e[0] + e[1]
-  zip(grid0, grid1).map(op)
+proc tanh*(x: InputGrid): auto =
+  x.map(scalarTanh)
 
-proc `-.`*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = e[0] - e[1]
-  zip(grid0, grid1).map(op)
+proc arcsin*(x: InputGrid): auto =
+  x.map(scalarArcsin)
 
-proc `*.`*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = e[0] * e[1]
-  zip(grid0, grid1).map(op)
+proc arccos*(x: InputGrid): auto =
+  x.map(scalarArccos)
 
-proc `/.`*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = e[0] / e[1]
-  zip(grid0, grid1).map(op)
+proc arctan*(x: InputGrid): auto =
+  x.map(scalarArctan)
 
-proc `^.`*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = pow(e[0], e[1])
-  zip(grid0, grid1).map(op)
+proc `+`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarAdd)
 
-proc `<.`*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = e[0] > e[1]
-  zip(grid0, grid1).map(op)
+proc `+.`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarAdd)
 
-proc `>.`*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = e[0] < e[1]
-  zip(grid0, grid1).map(op)
+proc `-`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarSub)
 
-proc `<=.`*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = e[0] >= e[1]
-  zip(grid0, grid1).map(op)
+proc `-.`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarSub)
 
-proc `>=.`*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = e[0] <= e[1]
-  zip(grid0, grid1).map(op)
+proc `*.`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarMul)
 
-proc `==.`*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = e[0] == e[1]
-  zip(grid0, grid1).map(op)
+proc `/.`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarDiv)
 
-proc `!=.`*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = e[0] != e[1]
-  zip(grid0, grid1).map(op)
+proc `^.`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarPow)
 
-proc `&.`*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = e[0] != e[1]
-  zip(grid0, grid1).map(op)
+proc `<.`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarLt)
 
-proc `mod`*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = e[0] mod e[1]
-  zip(grid0, grid1).map(op)
+proc `>.`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarGt)
 
-proc pow*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = pow(e[0], e[1])
-  zip(grid0, grid1).map(op)
+proc `<=.`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarLe)
 
-proc arctan2*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = arctan2(e[0], e[1])
-  zip(grid0, grid1).map(op)
+proc `>=.`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarGe)
 
-proc min*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = min(e[0], e[1])
-  zip(grid0, grid1).map(op)
+proc `==.`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarEq)
 
-proc max*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = max(e[0], e[1])
-  zip(grid0, grid1).map(op)
+proc `!=.`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarNe)
 
-proc argmin*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = int(e[0] > e[1])
-  zip(grid0, grid1).map(op)
+proc `&.`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarCat)
 
-proc argmax*(grid0: InputGrid, grid1: InputGrid): auto =
-  proc op(e: tuple): auto = int(e[0] <= e[1])
-  zip(grid0, grid1).map(op)
+proc `mod`*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarMod)
+
+proc pow*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarPow)
+
+proc arctan2*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarArctan2)
+
+proc min*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarMin)
+
+proc max*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarMax)
+
+proc argmin*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarArgmin)
+
+proc argmax*(x0: InputGrid0, x1: InputGrid1): auto =
+  zip(x0, x1).map(scalarArgmax)
 
 proc `+=`*(output: OutputGrid, input: InputGrid) =
   output[] = output +. input

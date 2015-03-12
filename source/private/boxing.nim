@@ -31,9 +31,9 @@ proc size*[G, m](grid: Boxed[G, m]): auto =
 proc get*[G, m](grid: Boxed[G, m], indices: array): auto =
   ## [doc]
   static: assert grid is InputGrid
-  const m1 = m
   var adjustedIndices {.noInit.}: grid.base.Indices
   forStatic dim, 0 .. <adjustedIndices.len:
+    const m1 = m
     adjustedIndices[dim] = when dim in m1: indices[m1.find(dim)] else: 0
   grid.base.get(adjustedIndices)
 

@@ -6,21 +6,71 @@ type InputGrid* = generic X
   ## [doc]
   var x: X; compiles(x.typeClassTag_InputGrid)
 
+type InputGrid0* = generic X
+  ## [doc]
+  var x: X; compiles(x.typeClassTag_InputGrid)
+
+type InputGrid1* = generic X
+  ## [doc]
+  var x: X; compiles(x.typeClassTag_InputGrid)
+
+type InputGrid2* = generic X
+  ## [doc]
+  var x: X; compiles(x.typeClassTag_InputGrid)
+
+type InputGrid3* = generic X
+  ## [doc]
+  var x: X; compiles(x.typeClassTag_InputGrid)
+
 type OutputGrid* = generic X
+  ## [doc]
+  var x: X; compiles(x.typeClassTag_OutputGrid)
+
+type OutputGrid0* = generic X
+  ## [doc]
+  var x: X; compiles(x.typeClassTag_OutputGrid)
+
+type OutputGrid1* = generic X
+  ## [doc]
+  var x: X; compiles(x.typeClassTag_OutputGrid)
+
+type OutputGrid2* = generic X
+  ## [doc]
+  var x: X; compiles(x.typeClassTag_OutputGrid)
+
+type OutputGrid3* = generic X
   ## [doc]
   var x: X; compiles(x.typeClassTag_OutputGrid)
 
 type StatefulGrid* = InputGrid and OutputGrid
   ## [doc]
 
+type StatefulGrid0* = InputGrid and OutputGrid
+  ## [doc]
+
+type StatefulGrid1* = InputGrid and OutputGrid
+  ## [doc]
+
+type StatefulGrid2* = InputGrid and OutputGrid
+  ## [doc]
+
+type StatefulGrid3* = InputGrid and OutputGrid
+  ## [doc]
+
 type SomeGrid* = InputGrid or OutputGrid
   ## [doc]
 
-type Scalar* = generic X
+type SomeGrid0* = InputGrid or OutputGrid
   ## [doc]
-  var x: X
-  not compiles(x.typeClassTag_InputGrid)
-  not compiles(x.typeClassTag_OutputGrid)
+
+type SomeGrid1* = InputGrid or OutputGrid
+  ## [doc]
+
+type SomeGrid2* = InputGrid or OutputGrid
+  ## [doc]
+
+type SomeGrid3* = InputGrid or OutputGrid
+  ## [doc]
 
 template nDim*(Grid: typedesc[SomeGrid]): int =
   ## [doc]
@@ -79,7 +129,7 @@ iterator pairs*(grid: InputGrid): auto =
   for i in grid.indices:
     yield (i, grid.get(i))
 
-proc `==`*(grid0: InputGrid, grid1: any): bool =
+proc `==`*(grid0: InputGrid0, grid1: InputGrid1): bool =
   ## [doc]
   if grid0.size != grid1.size:
     return false

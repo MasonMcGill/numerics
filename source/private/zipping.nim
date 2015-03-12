@@ -24,19 +24,20 @@ proc zip(inputs: tuple): auto =
       result.sizeBuffer[dim] = max(result.sizeBuffer[dim], inputs[i].size[dim])
       result.stridesBuffer[i][dim] = int(inputs[i].size[dim] > 1)
 
-proc zip*(input0: InputGrid): auto =
+proc zip*(input0: InputGrid0): auto =
   ## [doc]
   zip((field0: input0))
 
-proc zip*(input0: InputGrid, input1: any): auto =
+proc zip*(input0: InputGrid0, input1: InputGrid1): auto =
   ## [doc]
   zip((input0, input1))
 
-proc zip*(input0: InputGrid, input1: any, input2: any): auto =
+proc zip*(input0: InputGrid0, input1: InputGrid1, input2: InputGrid2): auto =
   ## [doc]
   zip((input0, input1, input2))
 
-proc zip*(input0: InputGrid, input1: any, input2: any, input3: any): auto =
+proc zip*(input0: InputGrid0, input1: InputGrid1,
+          input2: InputGrid2, input3: InputGrid3): auto =
   ## [doc]
   zip((input0, input1, input2, input3))
 
