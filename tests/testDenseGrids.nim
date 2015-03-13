@@ -42,16 +42,6 @@ test "newDenseGrid(Element, size)":
     for j in 0 .. <3:
       check grid.get([i, j]) == 0.0
 
-test "@@element":
-  block:
-    let grid = @@0
-    check grid.size == emptyIntArray
-    check grid.get(emptyIntArray) == 0
-  block:
-    let grid = @@"0"
-    check grid.size == emptyIntArray
-    check grid.get(emptyIntArray) == "0"
-
 test "@@nestedArrays":
   block:
     let grid = @@[0, 1, 2]
@@ -80,6 +70,16 @@ test "@@nestedArrays":
     check grid.get([0, 0, 0]) == "0"
     check grid.get([1, 0, 0]) == "1"
     check grid.get([2, 0, 0]) == "2"
+
+test "@@element":
+  block:
+    let grid = @@0
+    check grid.size == emptyIntArray
+    check grid.get(emptyIntArray) == 0
+  block:
+    let grid = @@"0"
+    check grid.size == emptyIntArray
+    check grid.get(emptyIntArray) == "0"
 
 test "denseGrid.put(indices, value)":
   block:

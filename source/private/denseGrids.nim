@@ -85,6 +85,11 @@ proc `@@`*[R, E](a: array[R, E]): auto =
     copyArrayToGridStmt(aNDim, ident"ABaseElement", ident"a")
   initResult()
 
+proc `@@`*[E](element: E): DenseGrid[0, E] =
+  ## [doc]
+  result = newDenseGrid(E)
+  result.put(emptyIntArray, element)
+
 proc size*[n, E](grid: DenseGrid[n, E]): array =
   ## [doc]
   grid.size
