@@ -12,7 +12,7 @@ from subprocess import call, check_output
 # Define constants.
 
 DOC_SITE = 'mmcgill@vision.caltech.edu:public_html/numerics'
-NIM_OPTIONS = '--warning[Deprecated]:off'
+NIM_OPTIONS = '--verbosity:0 --warning[Deprecated]:off'
 
 ################################################################################
 # Discover tests and benchmarks.
@@ -36,8 +36,7 @@ def run(target, options=''):
     target_path = join(here, target + '.nim')
     if not exists(dirname(binary_path)):
         makedirs(dirname(binary_path))
-    shell('nim c -r --verbosity:0' +
-          ' ' + NIM_OPTIONS + options +
+    shell('nim c -r ' + NIM_OPTIONS + options +
           ' --path:' + source_path +
           ' --out:' + binary_path +
           ' ' + target_path)
