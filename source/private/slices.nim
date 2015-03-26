@@ -32,7 +32,7 @@ proc size*[E](slice: StridedSlice[E]): array[1, int] =
 
 proc get*[E](slice: StridedSlice[E], indices: array[1, int]): E =
   ## [doc]
-  slice.first + slice.stride * indices[0]
+  slice.first + slice.stride * E(indices[0])
 
 proc view*[E](slice0: StridedSlice[E], slice1: array[1, StridedSlice[int]]):
               StridedSlice[E] =
