@@ -20,7 +20,7 @@ proc by*[E](slice: StridedSlice[E], stride: E): StridedSlice[E] =
 
 proc len*[E](slice: StridedSlice[E]): int =
   ## [doc]
-  (slice.last - slice.first) div slice.stride + 1
+  int(max((slice.last - slice.first) / slice.stride + 1, 0.0))
 
 proc contains*[E](slice: StridedSlice[E], element: E): bool =
   (element >= slice.first and element <= slice.last and
