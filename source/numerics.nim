@@ -9,8 +9,6 @@ import private.joining
 import private.zipping
 import private.mapping
 import private.folding # TODO Implement.
-import private.convolution # TODO Implement.
-import private.interpolation # TODO Implement.
 import private.constructors # TODO Implement.
 import private.unaryOps
 import private.binaryOps
@@ -28,8 +26,6 @@ export joining
 export zipping
 export mapping
 export folding
-export convolution
-export interpolation
 export constructors
 export unaryOps
 export binaryOps
