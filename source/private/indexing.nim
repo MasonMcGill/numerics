@@ -66,8 +66,12 @@ proc subgridExpr(gridExpr, indicesExpr: NimNode,
     elif indexTypes[dim] == "int":
       result = newCall("unbox", result, newLit(dim))
 
+proc `[]`*(grid: InputGrid|OutputGrid, indices: array): auto =
+  ## [doc]
+  grid.get(indices)
+
 proc `[]`*(grid: InputGrid|OutputGrid, indices: tuple): auto =
-  ## [doc]:
+  ## [doc]
   template areAllInts(indices: tuple, dim: int): bool =
     when compiles(indices[dim]):
       indices[dim] is int and indices.areAllInts(dim + 1)
@@ -88,6 +92,10 @@ proc `[]`*(grid: InputGrid|OutputGrid, indices: tuple): auto =
 macro `[]`*(grid: InputGrid|OutputGrid, indices: varargs[expr]): expr =
   ## [doc]
   newCall(bindSym"[]", grid, pack(indices))
+
+proc `[]=`*(grid: OutputGrid, indices: array, value: any) =
+  ## [doc]
+  grid.put(indices, value)
 
 proc `[]=`*(grid: OutputGrid, indices: tuple, value: any) =
   ## [doc]
