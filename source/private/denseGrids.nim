@@ -133,11 +133,11 @@ proc box*[n, E](grid: DenseGrid[n, E], dim: static[int]): auto =
   static: assert dim >= 0 and dim <= n
   var res {.noInit.}: DenseGrid[n + 1, E]
   res.size[dim] = 1
-  res.size[0 .. <dim] = grid.size[0 .. <dim]
-  res.size[dim + 1 .. <n + 1] = grid.size[dim .. <n]
+  when dim > 0: res.size[0 .. <dim] = grid.size[0 .. <dim]
+  when n > 0: res.size[dim + 1 .. <n + 1] = grid.size[dim .. <n]
   res.strides[dim] = 0
-  res.strides[0 .. <dim] = grid.strides[0 .. <dim]
-  res.strides[dim + 1 .. <n + 1] = grid.strides[dim .. <n]
+  when dim > 0: res.strides[0 .. <dim] = grid.strides[0 .. <dim]
+  when n > 0: res.strides[dim + 1 .. <n + 1] = grid.strides[dim .. <n]
   res.buffer.shallowCopy grid.buffer
   res.data = grid.data
   res
@@ -147,10 +147,10 @@ proc unbox*[n, E](grid: DenseGrid[n, E], dim: static[int]): auto =
   static: assert n > 0
   static: assert dim >= 0 and dim < n
   var res {.noInit.}: DenseGrid[n - 1, E]
-  res.size[0 .. <dim] = grid.size[0 .. <dim]
-  res.size[dim .. <n - 1] = grid.size[dim + 1 .. <n]
-  res.strides[0 .. <dim] = grid.strides[0 .. <dim]
-  res.strides[dim .. <n - 1] = grid.strides[dim + 1 .. <n]
+  when dim > 0: res.size[0 .. <dim] = grid.size[0 .. <dim]
+  when n > 1: res.size[dim .. <n - 1] = grid.size[dim + 1 .. <n]
+  when dim > 0: res.strides[0 .. <dim] = grid.strides[0 .. <dim]
+  when n > 1: res.strides[dim .. <n - 1] = grid.strides[dim + 1 .. <n]
   res.buffer.shallowCopy grid.buffer
   res.data = grid.data
   res

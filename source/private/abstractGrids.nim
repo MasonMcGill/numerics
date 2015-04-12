@@ -2,45 +2,45 @@ import macros
 import strutils
 import numericsInternals
 
-type InputGrid* = generic X
+type InputGrid* = concept x
   ## [doc]
-  var x: X; compiles(x.typeClassTag_InputGrid)
+  compiles(x.typeClassTag_InputGrid)
 
-type InputGrid0* = generic X
+type InputGrid0* = concept x
   ## [doc]
-  var x: X; compiles(x.typeClassTag_InputGrid)
+  compiles(x.typeClassTag_InputGrid)
 
-type InputGrid1* = generic X
+type InputGrid1* = concept x
   ## [doc]
-  var x: X; compiles(x.typeClassTag_InputGrid)
+  compiles(x.typeClassTag_InputGrid)
 
-type InputGrid2* = generic X
+type InputGrid2* = concept x
   ## [doc]
-  var x: X; compiles(x.typeClassTag_InputGrid)
+  compiles(x.typeClassTag_InputGrid)
 
-type InputGrid3* = generic X
+type InputGrid3* = concept x
   ## [doc]
-  var x: X; compiles(x.typeClassTag_InputGrid)
+  compiles(x.typeClassTag_InputGrid)
 
-type OutputGrid* = generic X
+type OutputGrid* = concept x
   ## [doc]
-  var x: X; compiles(x.typeClassTag_OutputGrid)
+  compiles(x.typeClassTag_OutputGrid)
 
-type OutputGrid0* = generic X
+type OutputGrid0* = concept x
   ## [doc]
-  var x: X; compiles(x.typeClassTag_OutputGrid)
+  compiles(x.typeClassTag_OutputGrid)
 
-type OutputGrid1* = generic X
+type OutputGrid1* = concept x
   ## [doc]
-  var x: X; compiles(x.typeClassTag_OutputGrid)
+  compiles(x.typeClassTag_OutputGrid)
 
-type OutputGrid2* = generic X
+type OutputGrid2* = concept x
   ## [doc]
-  var x: X; compiles(x.typeClassTag_OutputGrid)
+  compiles(x.typeClassTag_OutputGrid)
 
-type OutputGrid3* = generic X
+type OutputGrid3* = concept x
   ## [doc]
-  var x: X; compiles(x.typeClassTag_OutputGrid)
+  compiles(x.typeClassTag_OutputGrid)
 
 type StatefulGrid* = InputGrid and OutputGrid
   ## [doc]
@@ -146,7 +146,7 @@ proc describeGrid[R](grid: InputGrid, indices: array[R, int]): string =
     result = "["
     for i in 0 .. <grid.size[indices.len]:
       var adjustedIndices: array[indices.len + 1, int]
-      adjustedIndices[0 .. <indices.len] = indices
+      when indices.len > 0: adjustedIndices[0 .. <indices.len] = indices
       adjustedIndices[indices.len] = i
       if i > 0: result &= delim
       result &= describeGrid(grid, adjustedIndices).replace("\n", "\n ")

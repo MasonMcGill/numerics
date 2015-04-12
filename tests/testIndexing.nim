@@ -99,7 +99,7 @@ test "grid[index0, index1, index2]":
     assert view.get([0]) == "0,0,0"
     assert view.get([1]) == "1,0,0"
   block:
-    let view = newTestInputGrid3D(2, 1, 1)[1..1, 0..(-1), 0]
+    let view = newTestInputGrid3D(2, 2, 1)[1..1, 1..0, 0]
     assert view.size == [1, 0]
   block:
     let view = newTestInputGrid3D(2, 1, 1)[0..1, 0..0, 0..0]
@@ -123,7 +123,7 @@ test "grid[index0][index1, index2, index3]":
     assert view.get([0]) == "0,0,0"
     assert view.get([1]) == "1,0,0"
   block:
-    let view = newTestInputGrid3D(2, 1, 1)[1..1][0..0, 0..(-1), 0]
+    let view = newTestInputGrid3D(2, 2, 1)[1..1][0..0, 1..0, 0]
     assert view.size == [1, 0]
   block:
     let view = newTestInputGrid3D(2, 1, 1)[0..1][0..1, 0..0, 0..0]

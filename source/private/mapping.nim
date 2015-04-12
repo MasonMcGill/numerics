@@ -9,7 +9,7 @@ proc refExpr(exprNode: PNimrodNode): string {.compileTime.} =
   "expr" & $(exprNodes.len - 1)
 
 proc derefExpr(exprRef: string): PNimrodNode {.compileTime.} =
-  exprNodes[parseInt(exprRef[4 .. -1])]
+  exprNodes[parseInt(exprRef[4 .. ^1])]
 
 type Mapped*[Input: InputGrid, op: static[string]] = object
   ## [doc]
