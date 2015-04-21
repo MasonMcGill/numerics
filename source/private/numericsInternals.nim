@@ -1,4 +1,5 @@
 import macros
+import strutils
 
 #===============================================================================
 # Constants
@@ -7,6 +8,12 @@ const maxNDim* = 8
 const maxNZippedGrids* = 4
 
 const emptyIntArray* = (block: (var x: array[0, int]; x))
+
+#===============================================================================
+# Pointer Math
+
+proc `+=`*[E](p: var ptr E, i: int) =
+  p = cast[ptr E](cast[int](p) + i * sizeOf(E))
 
 #===============================================================================
 # AST Manipulation
@@ -51,3 +58,15 @@ proc toSeq*(slice: Slice[int]): seq[int] =
   result = newSeq[int]()
   for i in slice.a .. slice.b:
     result.add i
+
+#===============================================================================
+# Expression Referencing/Dereferencing
+
+var exprNodes {.compileTime.} = newSeq[PNimrodNode]()
+
+proc refExpr*(exprNode: PNimrodNode): string {.compileTime.} =
+  exprNodes.add exprNode
+  "expr" & $(exprNodes.len - 1)
+
+proc derefExpr*(exprRef: string): PNimrodNode {.compileTime.} =
+  exprNodes[parseInt(exprRef[4 .. ^1])]

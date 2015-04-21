@@ -1,15 +1,6 @@
 import macros
-import strutils
 import abstractGrids
-
-var exprNodes {.compileTime.} = newSeq[PNimrodNode]()
-
-proc refExpr(exprNode: PNimrodNode): string {.compileTime.} =
-  exprNodes.add exprNode
-  "expr" & $(exprNodes.len - 1)
-
-proc derefExpr(exprRef: string): PNimrodNode {.compileTime.} =
-  exprNodes[parseInt(exprRef[4 .. ^1])]
+import numericsInternals
 
 type Mapped*[Input: InputGrid, op: static[string]] = object
   ## [doc]

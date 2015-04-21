@@ -2,9 +2,6 @@ import macros
 import abstractGrids
 import numericsInternals
 
-proc `+=`[E](p: var ptr E, i: int) =
-  p = cast[ptr E](cast[int](p) + i * sizeOf(E))
-
 type DenseGrid* {.shallow.} [nDim: static[int]; Element] = object
   ## [doc]
   size, strides: array[nDim, int]
