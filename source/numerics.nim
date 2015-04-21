@@ -8,7 +8,7 @@ import private.indexing
 import private.joining
 import private.zipping
 import private.mapping
-import private.folding # TODO Implement.
+import private.folding
 import private.constructors
 import private.unaryOps
 import private.binaryOps
