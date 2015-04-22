@@ -14,14 +14,15 @@ proc zip(inputs: tuple): auto =
   proc getResultNDim: int =
     result = 0
     forStatic i, 0 .. <inputs.len:
-      result = max(result, inputs[i].nDim)
+      result = system.max(result, inputs[i].nDim)
   const resultNDim = getResultNDim()
   result = Zipped[type(inputs)](inputs: inputs)
   forStatic iAndDim, 0 .. <(inputs.len * resultNDim):
     const i = iAndDim div resultNDim
     const dim = iAndDim mod resultNDim
     when dim < inputs[i].nDim:
-      result.sizeBuffer[dim] = max(result.sizeBuffer[dim], inputs[i].size[dim])
+      if inputs[i].size[dim] > result.sizeBuffer[dim]:
+        result.sizeBuffer[dim] = inputs[i].size[dim]
       result.stridesBuffer[i][dim] = int(inputs[i].size[dim] > 1)
 
 proc zip*(input0: InputGrid0): auto =
@@ -46,7 +47,7 @@ proc size*[Inputs](grid: Zipped[Inputs]): auto =
   proc getGridNDim: int =
     result = 0
     forStatic i, 0 .. <grid.inputs.len:
-      result = max(result, grid.inputs[i].nDim)
+      result = system.max(result, grid.inputs[i].nDim)
   var res {.noInit.}: array[getGridNDim(), int]
   forStatic dim, 0 .. <res.len:
     res[dim] = grid.sizeBuffer[dim]

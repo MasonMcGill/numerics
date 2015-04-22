@@ -1,5 +1,6 @@
 import macros
 import abstractGrids
+import indexGrids
 import numericsInternals
 
 proc pack(args: NimNode): NimNode {.compileTime.} =
@@ -111,7 +112,7 @@ proc `[]=`*(grid: OutputGrid, indices: tuple, value: any) =
     grid.put(indicesArray, value)
   else:
     let gridView = grid[indices]
-    for i in gridView.indices:
+    for i in indexGrids.indices(gridView):
       when value is InputGrid:
         var subindices {.noInit.}: array[value.nDim, int]
         subindices[0 .. <subindices.len] = i[0 .. <subindices.len]

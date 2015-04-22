@@ -2,6 +2,7 @@ import private.abstractGrids
 import private.slices
 import private.pointGrids
 import private.denseGrids
+import private.indexGrids
 import private.views
 import private.boxing
 import private.indexing
@@ -19,6 +20,7 @@ export abstractGrids
 export slices
 export pointGrids
 export denseGrids
+export indexGrids
 export views
 export boxing
 export indexing

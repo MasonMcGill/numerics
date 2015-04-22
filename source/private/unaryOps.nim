@@ -7,6 +7,7 @@ proc scalarRe(x: any): auto = x.re
 proc scalarIm(x: any): auto = x.im
 
 proc `+.`*(x: InputGrid): auto =
+  ## [doc]
   x.map(`+`)
 
 proc `-.`*(x: InputGrid): auto =

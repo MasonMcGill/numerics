@@ -47,19 +47,19 @@ test "max(grid)":
 #   check argmin(@@[[1, 2, 3], [4, 5, 6]], 1)[1] == [1, 0]
 #   check argmin(@@[[1.0, 2.0], [3.0, 4.0]], 0)[0] == [0, 0]
 #   check argmin(@@[[1.0, 2.0], [3.0, 4.0]], 0)[1] == [0, 1]
-#
+
 # test "argmin(grid)":
 #   check argmin(@@[1, 2, 3]) == [0]
 #   check argmin(@@[[1, 2, 3], [4, 5, 6]]) == [0, 0]
 #   check argmin(@@[[1.0, 2.0], [3.0, 4.0]]) == [0, 0]
-#
+
 # test "argmax(grid, dim)":
 #   check argmax(@@[1, 2, 3], 0)[] == [2]
 #   check argmax(@@[[1, 2, 3], [4, 5, 6]], 1)[0] == [0, 2]
 #   check argmax(@@[[1, 2, 3], [4, 5, 6]], 1)[1] == [1, 2]
 #   check argmax(@@[[1.0, 2.0], [3.0, 4.0]], 0)[0] == [1, 0]
 #   check argmax(@@[[1.0, 2.0], [3.0, 4.0]], 0)[1] == [1, 1]
-#
+
 # test "argmax(grid)":
 #   check argmax(@@[1, 2, 3]) == [2]
 #   check argmax(@@[[1, 2, 3], [4, 5, 6]]) == [1, 2]

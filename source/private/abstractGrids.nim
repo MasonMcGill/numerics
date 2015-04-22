@@ -113,20 +113,19 @@ proc yieldIndicesStmt(nDim: int): NimNode {.compileTime.} =
         newCall("..", newLit(0), newCall("<", lenExpr)),
         result)
 
-iterator indices*(grid: SomeGrid): auto =
-  ## [doc]
+iterator iterIndices(grid: SomeGrid): auto =
   macro buildAction: stmt =
     yieldIndicesStmt(grid.nDim)
   buildAction()
 
 iterator items*(grid: InputGrid): auto =
   ## [doc]
-  for i in grid.indices:
+  for i in grid.iterIndices:
     yield grid.get(i)
 
 iterator pairs*(grid: InputGrid): auto =
   ## [doc]
-  for i in grid.indices:
+  for i in grid.iterIndices:
     yield (i, grid.get(i))
 
 proc `==`*(grid0: InputGrid0, grid1: InputGrid1): bool =
