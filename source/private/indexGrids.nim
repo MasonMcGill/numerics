@@ -17,7 +17,7 @@ proc size*[n](grid: IndexGrid[n]): auto =
   ## [doc]
   grid.size
 
-proc get*[n](grid: IndexGrid[n], indices: array): auto =
+proc get*[n](grid: IndexGrid[n], indices: array[n, int]): auto =
   ## [doc]
   indices
 

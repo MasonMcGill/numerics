@@ -7,6 +7,7 @@ type DenseGrid* {.shallow.} [nDim: static[int]; Element] = object
   size, strides: array[nDim, int]
   buffer: seq[Element]
   data: ptr Element
+  offset: int
   typeClassTag_InputGrid*: byte
   typeClassTag_OutputGrid*: byte
 
@@ -105,7 +106,7 @@ proc get*[n, E](grid: DenseGrid[n, E], indices: array): auto =
   forStatic dim, 0 .. <indices.len:
     assert indices[dim] < grid.size[dim]
     data += grid.strides[dim] * indices[dim]
-  data[]
+  result = data[]
 
 proc put*[n, E](grid: DenseGrid[n, E], indices: array, element: E) =
   ## [doc]
@@ -117,6 +118,7 @@ proc put*[n, E](grid: DenseGrid[n, E], indices: array, element: E) =
 
 proc view*[n, E](grid: DenseGrid[n, E], slices: array): DenseGrid[n, E] =
   ## [doc]
+  result.buffer.shallowCopy grid.buffer
   result.data = grid.data
   forStatic dim, 0 .. <n:
     assert slices[dim].first <= slices[dim].last + 1
